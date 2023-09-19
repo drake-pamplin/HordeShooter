@@ -20,3 +20,4 @@
 - Story component.
 - Procedural maps.
 - Different guns.
+- Boss enemies.
