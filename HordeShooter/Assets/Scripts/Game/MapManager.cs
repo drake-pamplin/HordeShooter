@@ -66,6 +66,9 @@ public class MapManager : MonoBehaviour
             if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueOuter)) {
                 orientation = GetWallOuterCornerOrientation(mapIndex);
             }
+            if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueInner)) {
+                orientation = GetWallInnerCornerOrientation(mapIndex);
+            }
 
             if (orientation != -1) {
                 sprite.transform.eulerAngles = new Vector3(
@@ -104,9 +107,38 @@ public class MapManager : MonoBehaviour
             }
 
             // Check for inner corner.
+            if (IsInnerCorner(mapIndex)) {
+                return Constants.spriteWallInnerCorner;
+            }
         }
         
-        return Constants.spriteFloorBase_1;
+        return Constants.valueNada;
+    }
+
+    // Get the orientation of a wall inner corner piece.
+    private int GetWallInnerCornerOrientation(int mapIndex) {
+        // Check diagonals for a space tile.
+        int upperRightIndex = mapIndex - mapWidth + 1;
+        if ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFill)) {
+            return 90;
+        }
+
+        int bottomRightIndex = mapIndex + mapWidth + 1;
+        if ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFill)) {
+            return 180;
+        }
+
+        int bottomLeftIndex = mapIndex + mapWidth - 1;
+        if ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFill))) {
+            return 270;
+        }
+
+        int upperLeftIndex = mapIndex - mapWidth - 1;
+        if ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFill)) {
+            return 0;
+        }
+
+        return -1;
     }
 
     // Get the orientation of a wall outer corner piece.
@@ -239,6 +271,85 @@ public class MapManager : MonoBehaviour
             if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    // Check if tile is an inner corner wall.
+    private bool IsInnerCorner(int mapIndex) {
+        /*
+            Check for
+            XX
+            .X
+        */
+        // Check left for 'X'
+        int leftIndex = mapIndex - 1;
+        // Check below for 'X'
+        int belowIndex = mapIndex + mapWidth;
+        // Check bottom left for '.'
+        int bottomLeftIndex = mapIndex + mapWidth - 1;
+        if (((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFill)))
+        ) {
+            return true;
+        }
+
+        /*
+            Check for
+            .X
+            XX
+        */
+        // Check above for 'X'
+        // Check upper left for '.'
+        // Check above for 'X'
+        int aboveIndex = mapIndex - mapWidth;
+        // Check left for 'X'
+        leftIndex = mapIndex - 1;
+        // Check upper left for '0'
+        int upperLeftIndex = mapIndex - mapWidth - 1;
+        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
+            ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFill))
+        ) {
+            return true;
+        }
+
+        /*
+            Check for
+            X.
+            XX
+        */
+        // Check above for 'X'
+        aboveIndex = mapIndex - mapWidth;
+        // Check to the right for 'X'
+        int rightIndex = mapIndex + 1;
+        // Check upper right for '.'
+        int upperRightIndex = mapIndex - mapWidth + 1;
+        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
+            ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFill))
+        ) {
+            return true;
+        }
+
+        /*
+            Check for
+            XX
+            X.
+        */
+        // Check right for 'X'
+        rightIndex = mapIndex + 1;
+        // Check bottom for 'X'
+        belowIndex = mapIndex + mapWidth;
+        // Check bottom right for '.'
+        int bottomRightIndex = mapIndex + mapWidth + 1;
+        if (((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFill))
+        ) {
+            return true;
         }
 
         return false;
