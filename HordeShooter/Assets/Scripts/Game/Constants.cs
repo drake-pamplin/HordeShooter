@@ -28,5 +28,9 @@ public class Constants : MonoBehaviour
     public readonly static char tileFloor = '0';
     public readonly static char tileWall = 'X';
 
+    public readonly static string valueInner = "INNER";
     public readonly static string valueNada = "NADA";
+    public readonly static string valueOuter = "OUTER";
+    public readonly static string valueSide = "SIDE";
+    public readonly static string valueWall = "WALL";
 }
