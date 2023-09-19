@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         MapManager.instance.LoadMap(Constants.mapBase);
+        MapManager.instance.BuildMap();
     }
 
     // Update is called once per frame

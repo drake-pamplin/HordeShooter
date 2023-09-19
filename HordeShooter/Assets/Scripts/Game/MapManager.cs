@@ -15,6 +15,7 @@ public class MapManager : MonoBehaviour
     private string mapString;
     private int mapHeight;
     private int mapWidth;
+    private List<GameObject> mapTiles = new List<GameObject>();
     
     // Start is called before the first frame update
     void Start()
@@ -28,6 +29,30 @@ public class MapManager : MonoBehaviour
         
     }
 
+    // Build map
+    public void BuildMap() {
+        if (mapTiles.Count != 0) {
+            foreach (GameObject tile in mapTiles) {
+                Destroy(tile);
+            }
+            mapTiles = new List<GameObject>();
+        }
+
+        if ("".Equals(mapString)) {
+            return;
+        }
+
+        for (int mapIndex = 0; mapIndex < mapWidth * mapHeight; mapIndex++) {
+            GameObject mapTile = Instantiate(
+                PrefabManager.instance.GetPrefab(Constants.gameObjectTileBase),
+                new Vector3(mapIndex % mapWidth, 0, (mapIndex / mapHeight) * -1),
+                Quaternion.identity
+            );
+        }
+
+        Camera.main.transform.position = new Vector3((float)mapWidth / 2.0f, 10, (float)mapHeight / -2.0f);
+    }
+    
     // Load map
     public void LoadMap(string mapName) {
         mapLines = System.IO.File.ReadAllLines(Constants.fileMapDirPath + mapName + ".txt");

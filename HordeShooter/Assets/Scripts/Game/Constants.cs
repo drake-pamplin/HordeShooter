@@ -7,6 +7,9 @@ public class Constants : MonoBehaviour
     public readonly static string extensionTxt = ".txt";
     
     public readonly static string fileMapDirPath = "Assets/Resources/Maps/";
+    public readonly static string fileTilePrefabPath = "Prefabs/Tile/";
+
+    public readonly static string gameObjectTileBase = "TileObject";
 
     public readonly static string mapBase = "Base";
 }
