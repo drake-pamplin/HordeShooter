@@ -10,6 +10,14 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
     
+    [Header ("Player Variables")]
+    public float playerMovmentSpeed = 1.0f;
+    public float GetPlayerMovementSpeed() { return playerMovmentSpeed; }
+
+    [Header ("World Variables")]
+    public float worldGravity = 9.8f;
+    public float GetWorldGravity() { return worldGravity; }
+    
     // Start is called before the first frame update
     void Start()
     {

@@ -10,6 +10,8 @@ public class Constants : MonoBehaviour
     public readonly static string fileTilePrefabPath = "Prefabs/Tile/";
     public readonly static string fileTileSpritePath = "Prefabs/Tile/Sprites/";
 
+    public readonly static string gameObjectRotationReference = "RotationReference";
+    public readonly static string gameObjectSprite = "Sprite";
     public readonly static string gameObjectTileBase = "TileObject";
 
     public readonly static string mapBase = "Base";
