@@ -24,23 +24,42 @@ public class PlayerAnimationController : MonoBehaviour
     }
     private Direction direction = Direction.Front;
 
+    private enum RunDirection {
+        Backwards,
+        Forwards
+    }
+    private RunDirection runDirection = RunDirection.Forwards;
+
     private struct DirectionAngle {
-        public DirectionAngle(Direction newDirection, float newMin, float newMax) {
+        public DirectionAngle(Direction newDirection, float newMin, float newMax, Vector2 newInputValues, List<Direction> newBackwards) {
             direction = newDirection;
             min = newMin;
             max = newMax;
+            inputValues = newInputValues;
+            backwardsDirections = newBackwards;
         }
 
         private Direction direction;
         public Direction GetDirection() { return direction; }
+        
         private float min;
         public float GetMin() { return min; }
+        
         private float max;
         public float GetMax() { return max; }
+
+        private Vector2 inputValues;
+        public Vector2 GetInputValues() { return inputValues; }
+        
+        private List<Direction> backwardsDirections;
+        public bool IsDirectionBackwards(Direction direction) {
+            return backwardsDirections.Contains(direction);
+        }
     }
     private List<DirectionAngle> directionAngles;
 
     private Animator animator;
+    private string currentlyPlayingAnimation = "";
     
     // Start is called before the first frame update
     void Start()
@@ -48,14 +67,46 @@ public class PlayerAnimationController : MonoBehaviour
         playerMovementController = GetComponent<PlayerMovementController>();
         
         directionAngles = new List<DirectionAngle>();
-        directionAngles.Add(new DirectionAngle(Direction.Back, 337.5f, 22.5f));
-        directionAngles.Add(new DirectionAngle(Direction.RearRight, 22.5f, 67.5f));
-        directionAngles.Add(new DirectionAngle(Direction.Right, 67.5f, 112.5f));
-        directionAngles.Add(new DirectionAngle(Direction.FrontRight, 112.5f, 157.5f));
-        directionAngles.Add(new DirectionAngle(Direction.Front, 157.5f, 202.5f));
-        directionAngles.Add(new DirectionAngle(Direction.FrontLeft, 202.5f, 247.5f));
-        directionAngles.Add(new DirectionAngle(Direction.Left, 247.5f, 292.5f));
-        directionAngles.Add(new DirectionAngle(Direction.RearLeft, 292.5f, 337.5f));
+        directionAngles.Add(new DirectionAngle(Direction.Back, 337.5f, 22.5f, new Vector2(1, 0), new List<Direction> {
+            Direction.FrontLeft,
+            Direction.Front,
+            Direction.FrontRight
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.RearRight, 22.5f, 67.5f, new Vector2(1, 1), new List<Direction> {
+            Direction.Left,
+            Direction.FrontLeft,
+            Direction.Front
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.Right, 67.5f, 112.5f, new Vector2(0, 1), new List<Direction> {
+            Direction.RearLeft,
+            Direction.Left,
+            Direction.FrontLeft
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.FrontRight, 112.5f, 157.5f, new Vector2(-1, 1), new List<Direction> {
+            Direction.Back,
+            Direction.RearLeft,
+            Direction.Left
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.Front, 157.5f, 202.5f, new Vector2(-1, 0), new List<Direction> {
+            Direction.RearLeft,
+            Direction.Back,
+            Direction.RearRight
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.FrontLeft, 202.5f, 247.5f, new Vector2(-1, -1), new List<Direction> {
+            Direction.Back,
+            Direction.RearRight,
+            Direction.Right
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.Left, 247.5f, 292.5f, new Vector2(0, -1), new List<Direction> {
+            Direction.RearRight,
+            Direction.Right,
+            Direction.FrontRight
+        }));
+        directionAngles.Add(new DirectionAngle(Direction.RearLeft, 292.5f, 337.5f, new Vector2(1, -1), new List<Direction> {
+            Direction.Right,
+            Direction.FrontRight,
+            Direction.Front
+        }));
         
         animator = transform.Find(Constants.gameObjectSprite).GetComponent<Animator>();
     }
@@ -64,14 +115,44 @@ public class PlayerAnimationController : MonoBehaviour
     void Update()
     {
         ProcessAnimation();
-        ProcessDirection();
+        ProcessLookDirection();
+        ProcessMoveDirection();
         ProcessMoveState();
     }
 
     // Get animation name.
     private string GetAnimationName() {
-        string animationName = animation.ToString() + Constants.splitCharUnderscore + direction.ToString();
+        string animationName = "";
+
+        // Get move direction prefix.
+        animationName += runDirection.Equals(RunDirection.Forwards) ? "" : runDirection.ToString();
+
+        // Get animation name.
+        animationName += animation.ToString();
+
+        // Get look direction.
+        animationName += Constants.splitCharUnderscore + direction.ToString();
+
         return animationName;
+    }
+
+    // Get direction for player input.
+    private Direction GetDirectionForPlayerInput(Vector2 playerInput) {
+        Direction moveDirection = direction;
+        foreach (DirectionAngle directionAngle in directionAngles) {
+            if (directionAngle.GetInputValues().Equals(playerInput)) {
+                moveDirection = directionAngle.GetDirection();
+            }
+        }
+        return moveDirection;
+    }
+
+    // Check if the animation playing is equal to the current animation to be played.
+    private bool IsAnimationActionEqual() {
+        string animationPrefix = "";
+        animationPrefix += runDirection.Equals(RunDirection.Forwards) ? "" : runDirection.ToString();
+        animationPrefix += animation.ToString();
+        return currentlyPlayingAnimation.Split(Constants.splitCharUnderscore)[0].Equals(animationPrefix);
     }
 
     // Check if animation is playing.
@@ -79,17 +160,39 @@ public class PlayerAnimationController : MonoBehaviour
         return animator.GetCurrentAnimatorStateInfo(0).IsName(animationName);
     }
 
+    // Check if move direction is backwards from the direction the player is facing.
+    private bool IsMoveDirectionBackwards() {
+        bool backwards = false;
+        
+        // Get player input.
+        Vector2 playerInput = new Vector2(InputManager.instance.GetVerticalInput(), InputManager.instance.GetHorizontalInput());
+
+        // Check DirectionAngles for a match to player input.
+        Direction moveDirection = GetDirectionForPlayerInput(playerInput);
+
+        // Check if direction is in the backwards list for the player's current direction.
+        foreach (DirectionAngle directionAngle in directionAngles) {
+            if (directionAngle.GetDirection().Equals(direction) && directionAngle.IsDirectionBackwards(moveDirection)) {
+                backwards = true;
+            }
+        }
+
+        return backwards;
+    }
+
     // Processing the animation to play.
     private void ProcessAnimation() {
         string animationName = GetAnimationName();
 
         if (!IsAnimationPlaying(animationName)) {
-            animator.Play(animationName);
+            float animationTime = IsAnimationActionEqual() ? animator.GetCurrentAnimatorStateInfo(0).normalizedTime : 0.0f;
+            animator.Play(animationName, 0, animationTime);
+            currentlyPlayingAnimation = animationName;
         }
     }
 
     // Process the direction the player is facing.
-    private void ProcessDirection() {
+    private void ProcessLookDirection() {
         Direction newDirection = Direction.Front;
         float rotationReference = transform.Find(Constants.gameObjectRotationReference).rotation.eulerAngles.y;
 
@@ -106,6 +209,17 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         direction = newDirection;
+    }
+
+    // Process the direction the player is moving.
+    private void ProcessMoveDirection() {
+        RunDirection newDirection = RunDirection.Forwards;
+
+        if (IsMoveDirectionBackwards()) {
+            newDirection = RunDirection.Backwards;
+        }
+
+        runDirection = newDirection;
     }
 
     // Process the player's move state.
