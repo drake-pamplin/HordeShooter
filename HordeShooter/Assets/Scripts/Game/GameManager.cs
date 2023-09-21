@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
     }
     
     [Header ("Player Variables")]
+    public float playerFireRate = 0.2f;
+    public float GetPlayerFireRate() { return playerFireRate; }
     public float playerMovmentSpeed = 1.0f;
     public float GetPlayerMovementSpeed() { return playerMovmentSpeed; }
 

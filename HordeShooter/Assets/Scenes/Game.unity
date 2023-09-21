@@ -195,6 +195,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 158ca049adf5a6e40a133dd973844a5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerFireRate: 0.15
   playerMovmentSpeed: 10
   worldGravity: 9.8
 --- !u!114 &943635820
@@ -431,6 +432,7 @@ GameObject:
   - component: {fileID: 1217048364}
   - component: {fileID: 1217048362}
   - component: {fileID: 1217048363}
+  - component: {fileID: 1217048365}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -506,6 +508,18 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: -0.7}
+--- !u!114 &1217048365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1217048360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6abbd02a3299d53439c7da1b04cd221c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1246174406
 GameObject:
   m_ObjectHideFlags: 0

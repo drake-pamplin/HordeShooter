@@ -49,6 +49,17 @@ public class InputManager : MonoBehaviour
         return input;
     }
 
+    // Get left mouse button down.
+    public bool GetLeftMouseDown() {
+        bool pressed = false;
+
+        if (Mouse.current.leftButton.isPressed) {
+            pressed = true;
+        }
+
+        return pressed;
+    }
+
     // Get vertical input.
     public int GetVerticalInput() {
         int input = 0;
