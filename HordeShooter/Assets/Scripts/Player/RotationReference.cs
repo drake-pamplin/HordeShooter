@@ -10,5 +10,6 @@ public class RotationReference : MonoBehaviour
         Vector3 mousePosition = InputManager.instance.GetEnvironmentRaycastToMouse();
         transform.LookAt(mousePosition);
         Debug.DrawRay(transform.position, transform.forward * 5, Color.red);
+        transform.eulerAngles = new Vector3(0, transform.rotation.eulerAngles.y, 0);
     }
 }

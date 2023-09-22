@@ -8,6 +8,7 @@ public class PlayerAttackController : MonoBehaviour
     
     private bool isFiring = false;
     private float fireCooldownStartTime = 0;
+    private float fireTimer = 0;
     
     // Start is called before the first frame update
     void Start()
@@ -29,12 +30,35 @@ public class PlayerAttackController : MonoBehaviour
             return;
         }
 
+        fireTimer += Time.deltaTime;
+        if (fireTimer > GameManager.instance.GetPlayerMaxAccuracyDecayFireTime()) {
+            fireTimer = GameManager.instance.GetPlayerMaxAccuracyDecayFireTime();
+        }
         if (Time.time - fireCooldownStartTime < GameManager.instance.GetPlayerFireRate()) {
             return;
         }
 
-        Debug.Log("Fire");
+        // Play muzzle flare.
         playerAnimationController.CreateMuzzleFlare();
+        
+        // Calculate accuracy deviance based on how long the player has been firing.
+        GameObject rotationReferenceObject = transform.Find(Constants.gameObjectRotationReference).gameObject;
+        Vector3 aimRotation = rotationReferenceObject.transform.rotation.eulerAngles;
+        float aimDeviance = Random.Range(GameManager.instance.GetPlayerAccuracyMaxDeviance() * -1, GameManager.instance.GetPlayerAccuracyMaxDeviance());
+        aimDeviance *= (fireTimer / GameManager.instance.GetPlayerMaxAccuracyDecayFireTime()) > 1 ? 1 : (fireTimer / GameManager.instance.GetPlayerMaxAccuracyDecayFireTime());
+        aimRotation.y += aimDeviance;
+        GameObject fireReference = transform.Find(Constants.gameObjectFireReference).gameObject;
+        fireReference.transform.eulerAngles = aimRotation;
+
+        // Raycast to create bullet hit.
+        RaycastHit hit;
+        Debug.DrawRay(transform.position, fireReference.transform.forward * 10, Color.red);
+        if (Physics.Raycast(rotationReferenceObject.transform.position, fireReference.transform.forward, out hit, 100)) {
+            Debug.Log(hit.collider.gameObject.name);
+            if (hit.collider.gameObject.CompareTag(Constants.tagWall)) {
+                playerAnimationController.CreateRicochet(hit);
+            }
+        }
 
         fireCooldownStartTime = Time.time;
     }
@@ -42,8 +66,16 @@ public class PlayerAttackController : MonoBehaviour
     // Process fire input
     private void ProcessFire() {
         isFiring = InputManager.instance.GetLeftMouseDown();
-        if (!isFiring && fireCooldownStartTime != 0) {
-            fireCooldownStartTime = 0;
+        if (!isFiring) {
+            if (fireCooldownStartTime != 0) {
+                fireCooldownStartTime = 0;
+            }
+            if (fireTimer > 0) {
+                fireTimer -= Time.deltaTime;
+            }
+            if (fireTimer < 0) {
+                fireTimer = 0;
+            }
         }
     }
 }
