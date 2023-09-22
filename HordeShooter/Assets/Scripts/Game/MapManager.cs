@@ -49,6 +49,15 @@ public class MapManager : MonoBehaviour
                 Quaternion.identity
             );
             mapTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + mapIndex;
+
+            // Create a wall collider.
+            if (mapString[mapIndex].Equals(Constants.tileWall)) {
+                GameObject wallObject = Instantiate(
+                    PrefabManager.instance.GetPrefab(Constants.gameObjectWallObject),
+                    mapTile.transform
+                );
+            }
+            
             string spriteName = GetBaseSpriteName(mapIndex);
             if (spriteName.Equals(Constants.valueNada)) {
                 continue;
@@ -78,8 +87,6 @@ public class MapManager : MonoBehaviour
                 );
             }
         }
-
-        // Camera.main.transform.position = new Vector3((float)(mapWidth - 1) / 2.0f, 10, (float)(mapHeight - 1) / -2.0f);
     }
 
     // Get the sprite for the tile location.

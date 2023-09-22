@@ -9,10 +9,14 @@ public class Constants : MonoBehaviour
     public readonly static string fileMapDirPath = "Assets/Resources/Maps/";
     public readonly static string fileTilePrefabPath = "Prefabs/Tile/";
     public readonly static string fileTileSpritePath = "Prefabs/Tile/Sprites/";
+    public readonly static string fileVFXPath = "Prefabs/VFX/";
 
+    public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
+    public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
     public readonly static string gameObjectRotationReference = "RotationReference";
     public readonly static string gameObjectSprite = "Sprite";
     public readonly static string gameObjectTileBase = "TileObject";
+    public readonly static string gameObjectWallObject = "WallObject";
 
     public readonly static string mapBase = "Base";
 

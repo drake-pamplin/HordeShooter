@@ -51,6 +51,17 @@ public class PrefabManager : MonoBehaviour
         filePath = Constants.fileTilePrefabPath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
         prefabLibrary.Add(objectName, prefab);
+        
+        objectName = Constants.gameObjectWallObject;
+        filePath = Constants.fileTilePrefabPath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
+
+        // VFX prefabs
+        objectName = Constants.gameObjectMuzzleFlare;
+        filePath = Constants.fileVFXPath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
 
         // Tile sprites
         objectName = Constants.spriteFloorBase_0;

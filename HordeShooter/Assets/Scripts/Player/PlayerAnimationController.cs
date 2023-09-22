@@ -120,6 +120,25 @@ public class PlayerAnimationController : MonoBehaviour
         ProcessMoveState();
     }
 
+    // Create muzzle flare.
+    public void CreateMuzzleFlare() {
+        // Get flare location.
+        Vector3 flareLocation = transform.Find(Constants.gameObjectMuzzleFlarePoints).Find(direction.ToString()).position;
+
+        // Get flare orientation.
+        int flareRotation = GetMuzzleFlareRotation();
+
+        // Create flare.
+        GameObject flareObject = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectMuzzleFlare),
+            flareLocation,
+            Quaternion.Euler(0, flareRotation, 0)
+        );
+
+        // Slate flare for destruction.
+        Destroy(flareObject, 1);
+    }
+
     // Get animation name.
     private string GetAnimationName() {
         string animationName = "";
@@ -145,6 +164,41 @@ public class PlayerAnimationController : MonoBehaviour
             }
         }
         return moveDirection;
+    }
+
+    // Get rotation for the muzzle flare.
+    private int GetMuzzleFlareRotation() {
+        int rotation = 0;
+        switch (direction) {
+            case Direction.Back:
+                rotation = -90;
+                break;
+            case Direction.RearRight:
+                rotation = -45;
+                break;
+            case Direction.Right:
+                rotation = 0;
+                break;
+            case Direction.FrontRight:
+                rotation = 45;
+                break;
+            case Direction.Front:
+                rotation = 90;
+                break;
+            case Direction.FrontLeft:
+                rotation = 135;
+                break;
+            case Direction.Left:
+                rotation = 180;
+                break;
+            case Direction.RearLeft:
+                rotation = 225;
+                break;
+            default:
+                rotation = 0;
+                break;
+        }
+        return rotation;
     }
 
     // Check if the animation playing is equal to the current animation to be played.

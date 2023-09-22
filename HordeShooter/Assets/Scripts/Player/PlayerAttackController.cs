@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class PlayerAttackController : MonoBehaviour
 {
+    private PlayerAnimationController playerAnimationController;
+    
     private bool isFiring = false;
     private float fireCooldownStartTime = 0;
     
     // Start is called before the first frame update
     void Start()
     {
-        
+        playerAnimationController = GetComponent<PlayerAnimationController>();
     }
 
     // Update is called once per frame
@@ -32,6 +34,7 @@ public class PlayerAttackController : MonoBehaviour
         }
 
         Debug.Log("Fire");
+        playerAnimationController.CreateMuzzleFlare();
 
         fireCooldownStartTime = Time.time;
     }
