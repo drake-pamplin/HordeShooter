@@ -10,7 +10,6 @@ public class PrefabManager : MonoBehaviour
         instance = this;
         
         prefabLibrary = new Dictionary<string, GameObject>();
-        tileSpritePrefabLibrary = new Dictionary<string, GameObject>();
         PopulatePrefabLibrary();
     }
     
@@ -18,13 +17,6 @@ public class PrefabManager : MonoBehaviour
     public GameObject GetPrefab(string prefabName) {
         GameObject prefab = null;
         prefabLibrary.TryGetValue(prefabName, out prefab);
-        return prefab;
-    }
-
-    private Dictionary<string, GameObject> tileSpritePrefabLibrary;
-    public GameObject GetTileSpritePrefab(string prefabName) {
-        GameObject prefab = null;
-        tileSpritePrefabLibrary.TryGetValue(prefabName, out prefab);
         return prefab;
     }
     
@@ -72,36 +64,42 @@ public class PrefabManager : MonoBehaviour
         objectName = Constants.spriteFloorBase_0;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteFloorBase_1;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteFloorBase_2;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteWallInnerCorner;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteWallOuterCorner;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteWallSide_0;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
 
         objectName = Constants.spriteWallSide_1;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
-        tileSpritePrefabLibrary.Add(objectName, prefab);
+        prefabLibrary.Add(objectName, prefab);
+
+        // Object sprites
+        objectName = Constants.gameObjectPillar;
+        filePath = Constants.fileObjectPath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
     }
 }

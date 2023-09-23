@@ -11,8 +11,10 @@ public class MapManager : MonoBehaviour
     }
 
     // Map variables
-    private string[] mapLines;
-    private string mapString;
+    private string[] mapTerrainLines;
+    private string mapTerrainString;
+    private string[] mapObjectLines;
+    private string mapObjectString;
     private int mapHeight;
     private int mapWidth;
     private List<GameObject> mapTiles = new List<GameObject>();
@@ -38,71 +40,96 @@ public class MapManager : MonoBehaviour
             mapTiles = new List<GameObject>();
         }
 
-        if ("".Equals(mapString)) {
+        if ("".Equals(mapTerrainString)) {
             return;
         }
 
+        // Create terrain layer.
         for (int mapIndex = 0; mapIndex < mapWidth * mapHeight; mapIndex++) {
-            GameObject mapTile = Instantiate(
-                PrefabManager.instance.GetPrefab(Constants.gameObjectTileBase),
-                new Vector3(mapIndex % mapWidth, 0, (mapIndex / mapWidth) * -1),
-                Quaternion.identity
-            );
-            mapTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + mapIndex;
-
-            // Create a wall collider.
-            if (mapString[mapIndex].Equals(Constants.tileWall)) {
-                GameObject wallObject = Instantiate(
-                    PrefabManager.instance.GetPrefab(Constants.gameObjectWallObject),
-                    mapTile.transform
-                );
-            }
-            
-            string spriteName = GetBaseSpriteName(mapIndex);
-            if (spriteName.Equals(Constants.valueNada)) {
-                continue;
-            }
-            GameObject sprite = Instantiate(
-                PrefabManager.instance.GetTileSpritePrefab(spriteName),
-                mapTile.transform
-            );
-            
-            int orientation = -1;
-            // Orient a wall piece
-            if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueSide)) {
-                orientation = GetWallSidePieceOrientation(mapIndex);
-            }
-            if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueOuter)) {
-                orientation = GetWallOuterCornerOrientation(mapIndex);
-            }
-            if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueInner)) {
-                orientation = GetWallInnerCornerOrientation(mapIndex);
-            }
-
-            if (orientation != -1) {
-                sprite.transform.eulerAngles = new Vector3(
-                    sprite.transform.eulerAngles.x,
-                    orientation,
-                    sprite.transform.eulerAngles.z
-                );
-            }
+            CreateTerrainTile(mapIndex);
+            CreateObjectTile(mapIndex);
         }
     }
+
+    // Create object tile.
+    private void CreateObjectTile(int mapIndex) {
+        // Get object sprite name.
+        string spriteName = GetObjectSpriteName(mapIndex);
+        if (spriteName.Equals(Constants.valueNada)) {
+            return;
+        }
+
+        // Create object prefab.
+        GameObject objectSprite = Instantiate(
+            PrefabManager.instance.GetPrefab(spriteName),
+            new Vector3(mapIndex % mapWidth, 0, (mapIndex / mapWidth) * -1),
+            Quaternion.identity
+        );
+        objectSprite.name = spriteName;
+    }
+
+    // Create terrain tile.
+    private void CreateTerrainTile(int mapIndex) {
+        GameObject mapTile = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectTileBase),
+            new Vector3(mapIndex % mapWidth, 0, (mapIndex / mapWidth) * -1),
+            Quaternion.identity
+        );
+        mapTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + mapIndex;
+
+        // Create a wall collider.
+        if (mapTerrainString[mapIndex].Equals(Constants.tileWall)) {
+            GameObject wallObject = Instantiate(
+                PrefabManager.instance.GetPrefab(Constants.gameObjectWallObject),
+                mapTile.transform
+            );
+        }
+        
+        string spriteName = GetBaseSpriteName(mapIndex);
+        if (spriteName.Equals(Constants.valueNada)) {
+            return;
+        }
+        GameObject sprite = Instantiate(
+            PrefabManager.instance.GetPrefab(spriteName),
+            mapTile.transform
+        );
+        
+        int orientation = -1;
+        // Orient a wall piece
+        if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueSide)) {
+            orientation = GetWallSidePieceOrientation(mapIndex);
+        }
+        if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueOuter)) {
+            orientation = GetWallOuterCornerOrientation(mapIndex);
+        }
+        if (spriteName.ToUpper().Contains(Constants.valueWall) && spriteName.ToUpper().Contains(Constants.valueInner)) {
+            orientation = GetWallInnerCornerOrientation(mapIndex);
+        }
+
+        if (orientation != -1) {
+            sprite.transform.eulerAngles = new Vector3(
+                sprite.transform.eulerAngles.x,
+                orientation,
+                sprite.transform.eulerAngles.z
+            );
+        }
+    }
+    
 
     // Get the sprite for the tile location.
     private string GetBaseSpriteName(int mapIndex) {
         // Check for fill.
-        if (mapString[mapIndex].Equals(Constants.tileFill)) {
+        if (mapTerrainString[mapIndex].Equals(Constants.tileFill)) {
             return Constants.valueNada;
         }
         
         // Check for floor tile.
-        if (mapString[mapIndex].Equals(Constants.tileFloor)) {
+        if (mapTerrainString[mapIndex].Equals(Constants.tileFloor)) {
             return Constants.spriteFloorBase_0;
         }
 
         // Check for flat wall.
-        if (mapString[mapIndex].Equals(Constants.tileWall)) {
+        if (mapTerrainString[mapIndex].Equals(Constants.tileWall)) {
             // Check for touching an inner corner
             if (!IsInInnerCorner(mapIndex)) {
                 return Constants.spriteWallSide_0;
@@ -122,26 +149,37 @@ public class MapManager : MonoBehaviour
         return Constants.valueNada;
     }
 
+    // Get object sprite name.
+    private string GetObjectSpriteName(int mapIndex) {
+        string spriteName = Constants.valueNada;
+
+        if (mapObjectString[mapIndex].Equals(Constants.tilePillar)) {
+            spriteName = Constants.gameObjectPillar;
+        }
+
+        return spriteName;
+    }
+
     // Get the orientation of a wall inner corner piece.
     private int GetWallInnerCornerOrientation(int mapIndex) {
         // Check diagonals for a space tile.
         int upperRightIndex = mapIndex - mapWidth + 1;
-        if ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFill)) {
+        if ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapTerrainString[upperRightIndex].Equals(Constants.tileFill)) {
             return 90;
         }
 
         int bottomRightIndex = mapIndex + mapWidth + 1;
-        if ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFill)) {
+        if ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapTerrainString[bottomRightIndex].Equals(Constants.tileFill)) {
             return 180;
         }
 
         int bottomLeftIndex = mapIndex + mapWidth - 1;
-        if ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFill))) {
+        if ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[bottomLeftIndex].Equals(Constants.tileFill))) {
             return 270;
         }
 
         int upperLeftIndex = mapIndex - mapWidth - 1;
-        if ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFill)) {
+        if ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[upperLeftIndex].Equals(Constants.tileFill)) {
             return 0;
         }
 
@@ -152,22 +190,22 @@ public class MapManager : MonoBehaviour
     private int GetWallOuterCornerOrientation(int mapIndex) {
         // Check diagonals for a floor tile.
         int upperRightIndex = mapIndex - mapWidth + 1;
-        if ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFloor)) {
+        if ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapTerrainString[upperRightIndex].Equals(Constants.tileFloor)) {
             return 270;
         }
 
         int bottomRightIndex = mapIndex + mapWidth + 1;
-        if ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFloor)) {
+        if ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapTerrainString[bottomRightIndex].Equals(Constants.tileFloor)) {
             return 0;
         }
 
         int bottomLeftIndex = mapIndex + mapWidth - 1;
-        if ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFloor))) {
+        if ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[bottomLeftIndex].Equals(Constants.tileFloor))) {
             return 90;
         }
 
         int upperLeftIndex = mapIndex - mapWidth - 1;
-        if ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFloor)) {
+        if ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[upperLeftIndex].Equals(Constants.tileFloor)) {
             return 180;
         }
 
@@ -178,22 +216,22 @@ public class MapManager : MonoBehaviour
     private int GetWallSidePieceOrientation(int mapIndex) {
         // Check each side for a floor tile.
         int checkIndex = mapIndex + 1;
-        if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileFloor)) {
+        if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileFloor)) {
             return 0;
         }
 
         checkIndex = mapIndex - 1;
-        if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileFloor)) {
+        if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapTerrainString[checkIndex].Equals(Constants.tileFloor)) {
             return 180;
         }
 
         checkIndex = mapIndex - mapWidth;
-        if (checkIndex >= 0 && mapString[checkIndex].Equals(Constants.tileFloor)) {
+        if (checkIndex >= 0 && mapTerrainString[checkIndex].Equals(Constants.tileFloor)) {
             return 270;
         }
 
         checkIndex = mapIndex + mapWidth;
-        if (checkIndex < (mapWidth * mapHeight) && mapString[checkIndex].Equals(Constants.tileFloor)) {
+        if (checkIndex < (mapWidth * mapHeight) && mapTerrainString[checkIndex].Equals(Constants.tileFloor)) {
             return 90;
         }
 
@@ -204,78 +242,78 @@ public class MapManager : MonoBehaviour
     private bool IsInInnerCorner(int mapIndex) {
         int checkIndex = mapIndex - mapWidth;
         // Check vertically for '.'
-        if (checkIndex >= 0 && mapString[checkIndex].Equals(Constants.tileFill)) {
+        if (checkIndex >= 0 && mapTerrainString[checkIndex].Equals(Constants.tileFill)) {
             checkIndex = (mapIndex - mapWidth) + 1;
             // Check horizontally from '.' for 'X'
-            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = (mapIndex - mapWidth) - 1;
-            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
         checkIndex = mapIndex + mapWidth;
-        if (checkIndex < (mapWidth * mapHeight) && mapString[checkIndex].Equals(Constants.tileFill)) {
+        if (checkIndex < (mapWidth * mapHeight) && mapTerrainString[checkIndex].Equals(Constants.tileFill)) {
             // Check horizontally from '.' for 'X'
             checkIndex = (mapIndex + mapWidth) + 1;
-            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = (mapIndex + mapWidth) - 1;
-            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
 
         // Check horizontally for '.'
         checkIndex = mapIndex + 1;
-        if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileFill)) {
+        if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileFill)) {
             // Check vertically from '.' for 'X'
             checkIndex = (mapIndex + 1) - mapWidth;
-            if (checkIndex >= 0 && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if (checkIndex >= 0 && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = (mapIndex + 1) + mapWidth;
-            if (checkIndex < (mapWidth * mapHeight) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if (checkIndex < (mapWidth * mapHeight) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
         checkIndex = mapIndex - 1;
-        if (checkIndex % mapWidth != (mapWidth - 1) && mapString[checkIndex].Equals(Constants.tileFill)) {
+        if (checkIndex % mapWidth != (mapWidth - 1) && mapTerrainString[checkIndex].Equals(Constants.tileFill)) {
             // Check vertically from '.' for 'X'
             checkIndex = (mapIndex - 1) - mapWidth;
-            if (checkIndex >= 0 && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if (checkIndex >= 0 && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = (mapIndex - 1) + mapWidth;
-            if (checkIndex < (mapWidth * mapHeight) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if (checkIndex < (mapWidth * mapHeight) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
 
         // Check vertically for 'X'
         checkIndex = mapIndex - mapWidth;
-        if (checkIndex >= 0 && mapString[checkIndex].Equals(Constants.tileWall)) {
+        if (checkIndex >= 0 && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
             checkIndex = mapIndex + 1;
             // Check horizontally from mapTile for 'X'
-            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = mapIndex - 1;
-            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
         checkIndex = mapIndex + mapWidth;
-        if (checkIndex < (mapWidth * mapHeight) && mapString[checkIndex].Equals(Constants.tileWall)) {
+        if (checkIndex < (mapWidth * mapHeight) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
             // Check horizontally from mapTile for 'X'
             checkIndex = mapIndex + 1;
-            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != 0 && checkIndex < (mapWidth * mapHeight)) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
             checkIndex = mapIndex - 1;
-            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapString[checkIndex].Equals(Constants.tileWall)) {
+            if ((checkIndex % mapWidth != (mapWidth - 1) && checkIndex >= 0) && mapTerrainString[checkIndex].Equals(Constants.tileWall)) {
                 return true;
             }
         }
@@ -296,9 +334,9 @@ public class MapManager : MonoBehaviour
         int belowIndex = mapIndex + mapWidth;
         // Check bottom left for '.'
         int bottomLeftIndex = mapIndex + mapWidth - 1;
-        if (((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
-            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
-            ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFill)))
+        if (((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapTerrainString[leftIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapTerrainString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[bottomLeftIndex].Equals(Constants.tileFill)))
         ) {
             return true;
         }
@@ -316,9 +354,9 @@ public class MapManager : MonoBehaviour
         leftIndex = mapIndex - 1;
         // Check upper left for '0'
         int upperLeftIndex = mapIndex - mapWidth - 1;
-        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
-            ((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
-            ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFill))
+        if ((aboveIndex >= 0 && mapTerrainString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapTerrainString[leftIndex].Equals(Constants.tileWall)) &&
+            ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[upperLeftIndex].Equals(Constants.tileFill))
         ) {
             return true;
         }
@@ -334,9 +372,9 @@ public class MapManager : MonoBehaviour
         int rightIndex = mapIndex + 1;
         // Check upper right for '.'
         int upperRightIndex = mapIndex - mapWidth + 1;
-        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
-            ((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
-            ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFill))
+        if ((aboveIndex >= 0 && mapTerrainString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapTerrainString[rightIndex].Equals(Constants.tileWall)) &&
+            ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapTerrainString[upperRightIndex].Equals(Constants.tileFill))
         ) {
             return true;
         }
@@ -352,9 +390,9 @@ public class MapManager : MonoBehaviour
         belowIndex = mapIndex + mapWidth;
         // Check bottom right for '.'
         int bottomRightIndex = mapIndex + mapWidth + 1;
-        if (((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
-            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
-            ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFill))
+        if (((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapTerrainString[rightIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapTerrainString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapTerrainString[bottomRightIndex].Equals(Constants.tileFill))
         ) {
             return true;
         }
@@ -375,9 +413,9 @@ public class MapManager : MonoBehaviour
         int rightIndex = mapIndex + 1;
         // Check upper right for '0'
         int upperRightIndex = mapIndex - mapWidth + 1;
-        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
-            ((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
-            ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapString[upperRightIndex].Equals(Constants.tileFloor))
+        if ((aboveIndex >= 0 && mapTerrainString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapTerrainString[rightIndex].Equals(Constants.tileWall)) &&
+            ((upperRightIndex >= 0 && upperRightIndex % mapWidth != 0) && mapTerrainString[upperRightIndex].Equals(Constants.tileFloor))
         ) {
             return true;
         }
@@ -393,9 +431,9 @@ public class MapManager : MonoBehaviour
         int belowIndex = mapIndex + mapWidth;
         // Check bottom right for '0'
         int bottomRightIndex = mapIndex + mapWidth + 1;
-        if (((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapString[rightIndex].Equals(Constants.tileWall)) &&
-            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
-            ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapString[bottomRightIndex].Equals(Constants.tileFloor))
+        if (((rightIndex % mapWidth != 0 && rightIndex < (mapWidth * mapHeight)) && mapTerrainString[rightIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapTerrainString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomRightIndex < (mapWidth * mapHeight) && bottomRightIndex % mapWidth != 0) && mapTerrainString[bottomRightIndex].Equals(Constants.tileFloor))
         ) {
             return true;
         }
@@ -411,9 +449,9 @@ public class MapManager : MonoBehaviour
         belowIndex = mapIndex + mapWidth;
         // Check bottom left for '0'
         int bottomLeftIndex = mapIndex + mapWidth - 1;
-        if (((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
-            (belowIndex < (mapWidth * mapHeight) && mapString[belowIndex].Equals(Constants.tileWall)) &&
-            ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapString[bottomLeftIndex].Equals(Constants.tileFloor)))
+        if (((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapTerrainString[leftIndex].Equals(Constants.tileWall)) &&
+            (belowIndex < (mapWidth * mapHeight) && mapTerrainString[belowIndex].Equals(Constants.tileWall)) &&
+            ((bottomLeftIndex < (mapWidth * mapHeight) && (bottomLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[bottomLeftIndex].Equals(Constants.tileFloor)))
         ) {
             return true;
         }
@@ -429,9 +467,9 @@ public class MapManager : MonoBehaviour
         leftIndex = mapIndex - 1;
         // Check upper left for '0'
         int upperLeftIndex = mapIndex - mapWidth - 1;
-        if ((aboveIndex >= 0 && mapString[aboveIndex].Equals(Constants.tileWall)) &&
-            ((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapString[leftIndex].Equals(Constants.tileWall)) &&
-            ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapString[upperLeftIndex].Equals(Constants.tileFloor))
+        if ((aboveIndex >= 0 && mapTerrainString[aboveIndex].Equals(Constants.tileWall)) &&
+            ((leftIndex % mapWidth != (mapWidth - 1) && leftIndex >= 0) && mapTerrainString[leftIndex].Equals(Constants.tileWall)) &&
+            ((upperLeftIndex >= 0 && upperLeftIndex % mapWidth != (mapWidth - 1)) && mapTerrainString[upperLeftIndex].Equals(Constants.tileFloor))
         ) {
             return true;
         }
@@ -441,15 +479,22 @@ public class MapManager : MonoBehaviour
     
     // Load map
     public void LoadMap(string mapName) {
-        mapLines = System.IO.File.ReadAllLines(Constants.fileMapDirPath + mapName + ".txt");
-        mapString = "";
-        foreach (string line in mapLines) {
-            mapString += line;
+        mapTerrainLines = System.IO.File.ReadAllLines(Constants.fileMapDirPath + mapName + Constants.splitCharUnderscore + Constants.mapLayerTerrain + ".txt");
+        mapObjectLines = System.IO.File.ReadAllLines(Constants.fileMapDirPath + mapName + Constants.splitCharUnderscore + Constants.mapLayerObjects + ".txt");
+        
+        // Load the terrain strings.
+        mapTerrainString = "";
+        foreach (string line in mapTerrainLines) {
+            mapTerrainString += line;
         }
-        mapWidth = mapLines[0].Length;
-        mapHeight = mapLines.Length;
+        mapWidth = mapTerrainLines[0].Length;
+        mapHeight = mapTerrainLines.Length;
 
-        RenderMapInConsole();
+        // Load the object strings.
+        mapObjectString = "";
+        foreach (string line in mapObjectLines) {
+            mapObjectString += line;
+        }
     }
 
     // Render map in console
@@ -459,7 +504,7 @@ public class MapManager : MonoBehaviour
             if (mapIndex > 0 && mapIndex % mapWidth == 0) {
                 mapRender += "\n";
             }
-            mapRender += mapString[mapIndex];
+            mapRender += mapTerrainString[mapIndex];
         }
         Debug.Log(mapRender);
     }

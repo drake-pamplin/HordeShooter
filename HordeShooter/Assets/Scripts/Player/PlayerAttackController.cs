@@ -54,10 +54,7 @@ public class PlayerAttackController : MonoBehaviour
         RaycastHit hit;
         Debug.DrawRay(transform.position, fireReference.transform.forward * 10, Color.red);
         if (Physics.Raycast(rotationReferenceObject.transform.position, fireReference.transform.forward, out hit, 100)) {
-            Debug.Log(hit.collider.gameObject.name);
-            if (hit.collider.gameObject.CompareTag(Constants.tagWall)) {
-                playerAnimationController.CreateRicochet(hit);
-            }
+            playerAnimationController.CreateRicochet(hit);
         }
 
         fireCooldownStartTime = Time.time;
