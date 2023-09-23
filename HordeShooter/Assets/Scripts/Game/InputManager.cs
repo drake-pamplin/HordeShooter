@@ -60,6 +60,17 @@ public class InputManager : MonoBehaviour
         return pressed;
     }
 
+    // Get reload input.
+    public bool GetReloadDown() {
+        bool pressed = false;
+
+        if (Keyboard.current.rKey.isPressed) {
+            pressed = true;
+        }
+
+        return pressed;
+    }
+
     // Get vertical input.
     public int GetVerticalInput() {
         int input = 0;

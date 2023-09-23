@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     public float GetPlayerFireRate() { return playerFireRate; }
     public float playerMovmentSpeed = 1.0f;
     public float GetPlayerMovementSpeed() { return playerMovmentSpeed; }
+    public int playerClipSize = 30;
+    public int GetPlayerClipSize() { return playerClipSize; }
+    public float playerReloadTime = 2.0f;
+    public float GetPlayerReloadTime() { return playerReloadTime; }
 
     [Header ("World Variables")]
     public float worldGravity = 9.8f;

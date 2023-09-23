@@ -6,34 +6,60 @@ public class PlayerAttackController : MonoBehaviour
 {
     private PlayerAnimationController playerAnimationController;
     
+    // Fire variables
     private bool isFiring = false;
     private float fireCooldownStartTime = 0;
     private float fireTimer = 0;
+
+    // Ammo variables
+    private int ammoInClip = 0;
+    public int GetAmmoInClip() { return ammoInClip; }
+    private bool reloadQueued = false;
+    private bool isReloading = false;
+    private float reloadStartTime = 0;
     
     // Start is called before the first frame update
     void Start()
     {
         playerAnimationController = GetComponent<PlayerAnimationController>();
+
+        ammoInClip = GameManager.instance.GetPlayerClipSize();
     }
 
     // Update is called once per frame
     void Update()
     {
         ProcessFire();
+        ProcessReload();
 
         HandleFire();
+        HandleReload();
     }
 
     // Handle the fire input.
     private void HandleFire() {
+        // Don't fire if the player is not firing.
         if (!isFiring) {
             return;
         }
 
+        // Don't fire if reloading.
+        if (isReloading) {
+            return;
+        }
+
+        // Do not fire if clip is empty.
+        if (ammoInClip == 0) {
+            return;
+        }
+
+        // If the player is firing, tick up the accuracy decay.
         fireTimer += Time.deltaTime;
         if (fireTimer > GameManager.instance.GetPlayerMaxAccuracyDecayFireTime()) {
             fireTimer = GameManager.instance.GetPlayerMaxAccuracyDecayFireTime();
         }
+        
+        // Do not fire if weapon is cycling.
         if (Time.time - fireCooldownStartTime < GameManager.instance.GetPlayerFireRate()) {
             return;
         }
@@ -57,7 +83,37 @@ public class PlayerAttackController : MonoBehaviour
             playerAnimationController.CreateRicochet(hit);
         }
 
+        // Subtract bullet from clip.
+        ammoInClip--;
+
         fireCooldownStartTime = Time.time;
+    }
+
+    // Handle reload input.
+    private void HandleReload() {
+        // Don't reload if clip is full.
+        if (ammoInClip == GameManager.instance.GetPlayerClipSize()) {
+            return;
+        }
+
+        // Do not reload if not reloading.
+        if (!isReloading) {
+            return;
+        }
+
+        // Start reload if not reloading and player is attempting one.
+        if (reloadStartTime == 0) {
+            reloadStartTime = Time.time;
+        }
+
+        // Don't proceed if time has not elapsed.
+        if (Time.time - reloadStartTime < GameManager.instance.GetPlayerReloadTime()) {
+            return;
+        }
+
+        ammoInClip = GameManager.instance.GetPlayerClipSize();
+        isReloading = false;
+        reloadStartTime = 0;
     }
 
     // Process fire input
@@ -73,6 +129,14 @@ public class PlayerAttackController : MonoBehaviour
             if (fireTimer < 0) {
                 fireTimer = 0;
             }
+        }
+    }
+
+    // Process reload input.
+    private void ProcessReload() {
+        reloadQueued = InputManager.instance.GetReloadDown();
+        if (reloadQueued && !isReloading) {
+            isReloading = true;
         }
     }
 }

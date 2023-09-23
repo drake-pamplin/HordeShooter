@@ -12,6 +12,8 @@ public class Constants : MonoBehaviour
     public readonly static string fileTileSpritePath = "Prefabs/Tile/Sprites/";
     public readonly static string fileVFXPath = "Prefabs/VFX/";
 
+    public readonly static string gameObjectAmmoCounter = "AmmoCounter";
+    public readonly static string gameObjectBackground = "Background";
     public readonly static string gameObjectFireReference = "FireReference";
     public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
     public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
@@ -19,6 +21,7 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectRicochetObject = "RicochetObject";
     public readonly static string gameObjectRotationReference = "RotationReference";
     public readonly static string gameObjectSprite = "Sprite";
+    public readonly static string gameObjectText = "Text";
     public readonly static string gameObjectTileBase = "TileObject";
     public readonly static string gameObjectWallObject = "WallObject";
 
@@ -37,6 +40,7 @@ public class Constants : MonoBehaviour
     public readonly static string spriteWallSide_1 = "WallSide_1";
 
     public readonly static string tagObject = "Object";
+    public readonly static string tagPlayer = "Player";
     public readonly static string tagWall = "Wall";
 
     public readonly static char tileFill = '.';
