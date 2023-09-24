@@ -595,6 +595,7 @@ MonoBehaviour:
   playerFireRate: 0.1
   playerMovmentSpeed: 5
   playerClipSize: 30
+  playerReloadTime: 2
   worldGravity: 9.8
 --- !u!114 &943635820
 MonoBehaviour:

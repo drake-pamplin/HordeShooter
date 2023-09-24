@@ -18,6 +18,7 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
     public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
     public readonly static string gameObjectPillar = "Pillar";
+    public readonly static string gameObjectReloadIndicator = "ReloadIndicator";
     public readonly static string gameObjectRicochetObject = "RicochetObject";
     public readonly static string gameObjectRotationReference = "RotationReference";
     public readonly static string gameObjectSprite = "Sprite";

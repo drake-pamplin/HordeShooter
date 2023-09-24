@@ -104,6 +104,7 @@ public class PlayerAttackController : MonoBehaviour
         // Start reload if not reloading and player is attempting one.
         if (reloadStartTime == 0) {
             reloadStartTime = Time.time;
+            playerAnimationController.CreateReloadIndicator();
         }
 
         // Don't proceed if time has not elapsed.

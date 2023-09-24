@@ -139,6 +139,19 @@ public class PlayerAnimationController : MonoBehaviour
         Destroy(flareObject, 1);
     }
 
+    // Create reload indicator.
+    public void CreateReloadIndicator() {
+        // Create reload indicator object.
+        GameObject reloadIndicator = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectReloadIndicator),
+            GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position,
+            Quaternion.identity
+        );
+
+        // Slate it for destruction after reload is complete.
+        Destroy(reloadIndicator, GameManager.instance.GetPlayerReloadTime());
+    }
+
     // Create ricochet.
     public void CreateRicochet(RaycastHit hit) {
         // Get hit object.
