@@ -596,6 +596,8 @@ MonoBehaviour:
   playerMovmentSpeed: 5
   playerClipSize: 30
   playerReloadTime: 2
+  playerRollTime: 0.5
+  playerRollSpeed: 7.5
   worldGravity: 9.8
 --- !u!114 &943635820
 MonoBehaviour:

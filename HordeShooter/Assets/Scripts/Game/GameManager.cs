@@ -23,6 +23,10 @@ public class GameManager : MonoBehaviour
     public int GetPlayerClipSize() { return playerClipSize; }
     public float playerReloadTime = 2.0f;
     public float GetPlayerReloadTime() { return playerReloadTime; }
+    public float playerRollTime = 1.0f;
+    public float GetPlayerRollTime() { return playerRollTime; }
+    public float playerRollSpeed = 10.0f;
+    public float GetPlayerRollSpeed() { return playerRollSpeed; }
 
     [Header ("World Variables")]
     public float worldGravity = 9.8f;

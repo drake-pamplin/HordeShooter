@@ -8,6 +8,7 @@ public class PlayerAnimationController : MonoBehaviour
     
     private enum PlayerAnimation {
         Idle,
+        Roll,
         Run
     }
     private PlayerAnimation animation = PlayerAnimation.Idle;
@@ -322,6 +323,11 @@ public class PlayerAnimationController : MonoBehaviour
         return backwards;
     }
 
+    // Perform a roll.
+    public void PerformRoll() {
+
+    }
+
     // Processing the animation to play.
     private void ProcessAnimation() {
         string animationName = GetAnimationName();
@@ -357,7 +363,7 @@ public class PlayerAnimationController : MonoBehaviour
     private void ProcessMoveDirection() {
         RunDirection newDirection = RunDirection.Forwards;
 
-        if (IsMoveDirectionBackwards()) {
+        if (!animation.Equals(PlayerAnimation.Roll) && IsMoveDirectionBackwards()) {
             newDirection = RunDirection.Backwards;
         }
 
@@ -368,7 +374,9 @@ public class PlayerAnimationController : MonoBehaviour
     private void ProcessMoveState() {
         PlayerAnimation newAnimation = PlayerAnimation.Idle;
 
-        if (playerMovementController.IsMoving()) {
+        if (playerMovementController.IsRolling()) {
+            newAnimation = PlayerAnimation.Roll;
+        } else if (playerMovementController.IsMoving()) {
             newAnimation = PlayerAnimation.Run;
         }
 

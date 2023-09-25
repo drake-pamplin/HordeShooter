@@ -71,6 +71,17 @@ public class InputManager : MonoBehaviour
         return pressed;
     }
 
+    // Get roll input.
+    public bool GetRollInput() {
+        bool pressed = false;
+
+        if (Keyboard.current.spaceKey.isPressed) {
+            pressed = true;
+        }
+
+        return pressed;
+    }
+
     // Get vertical input.
     public int GetVerticalInput() {
         int input = 0;
