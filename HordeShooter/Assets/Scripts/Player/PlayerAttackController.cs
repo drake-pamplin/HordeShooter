@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerAttackController : MonoBehaviour
 {
     private PlayerAnimationController playerAnimationController;
+    private PlayerMovementController playerMovementController;
     
     // Fire variables
     private bool isFiring = false;
@@ -16,12 +17,26 @@ public class PlayerAttackController : MonoBehaviour
     public int GetAmmoInClip() { return ammoInClip; }
     private bool reloadQueued = false;
     private bool isReloading = false;
+    public bool IsReloading() { return isReloading; }
     private float reloadStartTime = 0;
+    private bool isReloadPaused = false;
+    public bool IsReloadPaused() { return isReloadPaused; }
+    private float reloadPauseTime = 0;
+    public void PauseReload() {
+        reloadPauseTime = Time.time;
+        isReloadPaused = true;
+    }
+    public void ResumeReload() {
+        reloadStartTime += (Time.time - reloadPauseTime);
+        reloadPauseTime = 0;
+        isReloadPaused = false;
+    }
     
     // Start is called before the first frame update
     void Start()
     {
         playerAnimationController = GetComponent<PlayerAnimationController>();
+        playerMovementController = GetComponent<PlayerMovementController>();
 
         ammoInClip = GameManager.instance.GetPlayerClipSize();
     }
@@ -45,6 +60,11 @@ public class PlayerAttackController : MonoBehaviour
 
         // Don't fire if reloading.
         if (isReloading) {
+            return;
+        }
+
+        // Do not fire if rolling.
+        if (playerMovementController.IsRolling()) {
             return;
         }
 
@@ -109,6 +129,11 @@ public class PlayerAttackController : MonoBehaviour
 
         // Don't proceed if time has not elapsed.
         if (Time.time - reloadStartTime < GameManager.instance.GetPlayerReloadTime()) {
+            return;
+        }
+
+        // Do not proceed if reload is paused.
+        if (isReloadPaused) {
             return;
         }
 

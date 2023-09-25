@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerAnimationController : MonoBehaviour
 {
+    private PlayerAttackController playerAttackController;
     private PlayerMovementController playerMovementController;
     
     private enum PlayerAnimation {
@@ -62,10 +63,13 @@ public class PlayerAnimationController : MonoBehaviour
 
     private Animator animator;
     private string currentlyPlayingAnimation = "";
+    private GameObject reloadIndicator = null;
+    private float reloadIndicatorProgress = 0;
     
     // Start is called before the first frame update
     void Start()
     {
+        playerAttackController = GetComponent<PlayerAttackController>();
         playerMovementController = GetComponent<PlayerMovementController>();
         
         directionAngles = new List<DirectionAngle>();
@@ -121,6 +125,8 @@ public class PlayerAnimationController : MonoBehaviour
         ProcessMoveDirection();
         ProcessMoveState();
         ProcessRunDirection();
+
+        HandleReloadIndicator();
     }
 
     // Create muzzle flare.
@@ -145,14 +151,12 @@ public class PlayerAnimationController : MonoBehaviour
     // Create reload indicator.
     public void CreateReloadIndicator() {
         // Create reload indicator object.
-        GameObject reloadIndicator = Instantiate(
+        reloadIndicator = Instantiate(
             PrefabManager.instance.GetPrefab(Constants.gameObjectReloadIndicator),
             GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position,
             Quaternion.identity
         );
-
-        // Slate it for destruction after reload is complete.
-        Destroy(reloadIndicator, GameManager.instance.GetPlayerReloadTime());
+        reloadIndicator.transform.Find(Constants.gameObjectSprite).GetComponent<Animator>().Play(Constants.animationReload, 0, reloadIndicatorProgress);
     }
 
     // Create ricochet.
@@ -296,6 +300,33 @@ public class PlayerAnimationController : MonoBehaviour
         return rotation;
     }
 
+    // Handle the reload indicator.
+    private void HandleReloadIndicator() {
+        // Not needed if not reloading.
+        if (!playerAttackController.IsReloading()) {
+            // Destroy indicator if it still exists.
+            if (reloadIndicator != null) {
+                Destroy(reloadIndicator);
+                reloadIndicator = null;
+                reloadIndicatorProgress = 0;
+            }
+            
+            return;
+        }
+
+        // Create reload indicator if not paused and no indicator exists.
+        if (!playerAttackController.IsReloadPaused() && reloadIndicator == null) {
+            CreateReloadIndicator();
+        }
+
+        // Pause reload if necessary.
+        if (playerAttackController.IsReloadPaused() && reloadIndicator != null) {
+            reloadIndicatorProgress = reloadIndicator.transform.Find(Constants.gameObjectSprite).GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime;
+            Destroy(reloadIndicator);
+            reloadIndicator = null;
+        }
+    }
+
     // Check if the animation playing is equal to the current animation to be played.
     private bool IsAnimationActionEqual() {
         string animationPrefix = "";
@@ -337,7 +368,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
-    // Process the lookDirection the player is facing.
+    // Process the direction the player is facing.
     private void ProcessLookDirection() {
         Direction newDirection = Direction.Front;
         float rotationReference = transform.Find(Constants.gameObjectRotationReference).rotation.eulerAngles.y;

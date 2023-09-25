@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Constants : MonoBehaviour
 {
+    public readonly static string animationReload = "Reload";
+    
     public readonly static string extensionTxt = ".txt";
     
     public readonly static string fileMapDirPath = "Assets/Resources/Maps/";

@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerMovementController : MonoBehaviour
 {
     PlayerAnimationController playerAnimationController;
+    PlayerAttackController playerAttackController;
     
     private CharacterController controller;
     private int horizontalInput = 0;
@@ -21,6 +22,7 @@ public class PlayerMovementController : MonoBehaviour
     void Start()
     {
         playerAnimationController = GetComponent<PlayerAnimationController>();
+        playerAttackController = GetComponent<PlayerAttackController>();
         
         controller = GetComponent<CharacterController>();
     }
@@ -70,6 +72,11 @@ public class PlayerMovementController : MonoBehaviour
 
             // Gather roll input.
             rollInput = new Vector2(InputManager.instance.GetVerticalInput(), InputManager.instance.GetHorizontalInput());
+
+            // Pause reload if active.
+            if (playerAttackController.IsReloading()) {
+                playerAttackController.PauseReload();
+            }
         }
 
         // Roll no action is needed while in the roll.
@@ -77,10 +84,11 @@ public class PlayerMovementController : MonoBehaviour
             return;
         }
 
-        // Pause reload if active.
-
         isRolling = false;
         rollStartTime = 0;
+        if (playerAttackController.IsReloading()) {
+            playerAttackController.ResumeReload();
+        }
     }
 
     // Check if player is moving.
