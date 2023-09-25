@@ -15,6 +15,7 @@ public class PlayerMovementController : MonoBehaviour
     private bool isRolling = false;
     private float rollStartTime = 0;
     private Vector2 rollInput = Vector2.zero;
+    public Vector2 GetRollInput() { return rollInput; }
     
     // Start is called before the first frame update
     void Start()
@@ -46,7 +47,7 @@ public class PlayerMovementController : MonoBehaviour
         Vector3 moveVector = new Vector3(horizontalInput, 0, verticalInput);
         if (isRolling) {
             movementSpeed = GameManager.instance.GetPlayerRollSpeed();
-            moveVector = new Vector3(rollInput.x, 0, rollInput.y);
+            moveVector = new Vector3(rollInput.y, 0, rollInput.x);
         }
         controller.Move(moveVector * Time.deltaTime * movementSpeed);
 
@@ -68,7 +69,7 @@ public class PlayerMovementController : MonoBehaviour
             rollStartTime = Time.time;
 
             // Gather roll input.
-            rollInput = new Vector2(InputManager.instance.GetHorizontalInput(), InputManager.instance.GetVerticalInput());
+            rollInput = new Vector2(InputManager.instance.GetVerticalInput(), InputManager.instance.GetHorizontalInput());
         }
 
         // Roll no action is needed while in the roll.
@@ -98,7 +99,7 @@ public class PlayerMovementController : MonoBehaviour
         verticalInput = InputManager.instance.GetVerticalInput();
 
         rollQueued = InputManager.instance.GetRollInput();
-        if (rollQueued && !isRolling) {
+        if (rollQueued && IsMoving() && !isRolling) {
             isRolling = true;
         }
     }

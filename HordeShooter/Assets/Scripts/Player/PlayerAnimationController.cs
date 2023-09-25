@@ -23,7 +23,8 @@ public class PlayerAnimationController : MonoBehaviour
         RearRight,
         Right
     }
-    private Direction direction = Direction.Front;
+    private Direction lookDirection = Direction.Front;
+    private Direction moveDirection = Direction.Front;
 
     private enum RunDirection {
         Backwards,
@@ -119,12 +120,13 @@ public class PlayerAnimationController : MonoBehaviour
         ProcessLookDirection();
         ProcessMoveDirection();
         ProcessMoveState();
+        ProcessRunDirection();
     }
 
     // Create muzzle flare.
     public void CreateMuzzleFlare() {
         // Get flare location.
-        Vector3 flareLocation = transform.Find(Constants.gameObjectMuzzleFlarePoints).Find(direction.ToString()).position;
+        Vector3 flareLocation = transform.Find(Constants.gameObjectMuzzleFlarePoints).Find(lookDirection.ToString()).position;
 
         // Get flare orientation.
         int flareRotation = GetMuzzleFlareRotation();
@@ -239,14 +241,18 @@ public class PlayerAnimationController : MonoBehaviour
         animationName += animation.ToString();
 
         // Get look direction.
-        animationName += Constants.splitCharUnderscore + direction.ToString();
+        Direction animationDirection = lookDirection;
+        if (playerMovementController.IsRolling()) {
+            animationDirection = moveDirection;
+        }
+        animationName += Constants.splitCharUnderscore + animationDirection.ToString();
 
         return animationName;
     }
 
     // Get direction for player input.
     private Direction GetDirectionForPlayerInput(Vector2 playerInput) {
-        Direction moveDirection = direction;
+        Direction moveDirection = lookDirection;
         foreach (DirectionAngle directionAngle in directionAngles) {
             if (directionAngle.GetInputValues().Equals(playerInput)) {
                 moveDirection = directionAngle.GetDirection();
@@ -258,7 +264,7 @@ public class PlayerAnimationController : MonoBehaviour
     // Get rotation for the muzzle flare.
     private int GetMuzzleFlareRotation() {
         int rotation = 0;
-        switch (direction) {
+        switch (lookDirection) {
             case Direction.Back:
                 rotation = -90;
                 break;
@@ -310,22 +316,14 @@ public class PlayerAnimationController : MonoBehaviour
         // Get player input.
         Vector2 playerInput = new Vector2(InputManager.instance.GetVerticalInput(), InputManager.instance.GetHorizontalInput());
 
-        // Check DirectionAngles for a match to player input.
-        Direction moveDirection = GetDirectionForPlayerInput(playerInput);
-
-        // Check if direction is in the backwards list for the player's current direction.
+        // Check if direction is in the backwards list for the player's current lookDirection.
         foreach (DirectionAngle directionAngle in directionAngles) {
-            if (directionAngle.GetDirection().Equals(direction) && directionAngle.IsDirectionBackwards(moveDirection)) {
+            if (directionAngle.GetDirection().Equals(lookDirection) && directionAngle.IsDirectionBackwards(moveDirection)) {
                 backwards = true;
             }
         }
 
         return backwards;
-    }
-
-    // Perform a roll.
-    public void PerformRoll() {
-
     }
 
     // Processing the animation to play.
@@ -339,7 +337,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
-    // Process the direction the player is facing.
+    // Process the lookDirection the player is facing.
     private void ProcessLookDirection() {
         Direction newDirection = Direction.Front;
         float rotationReference = transform.Find(Constants.gameObjectRotationReference).rotation.eulerAngles.y;
@@ -356,18 +354,20 @@ public class PlayerAnimationController : MonoBehaviour
             }
         }
 
-        direction = newDirection;
+        lookDirection = newDirection;
     }
 
     // Process the direction the player is moving.
     private void ProcessMoveDirection() {
-        RunDirection newDirection = RunDirection.Forwards;
+        Direction newDirection = Direction.Front;
 
-        if (!animation.Equals(PlayerAnimation.Roll) && IsMoveDirectionBackwards()) {
-            newDirection = RunDirection.Backwards;
+        Vector2 input = new Vector2(InputManager.instance.GetVerticalInput(), InputManager.instance.GetHorizontalInput());
+        if (playerMovementController.IsRolling()) {
+            input = playerMovementController.GetRollInput();
         }
+        newDirection = GetDirectionForPlayerInput(input);
 
-        runDirection = newDirection;
+        moveDirection = newDirection;
     }
 
     // Process the player's move state.
@@ -381,5 +381,16 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         animation = newAnimation;
+    }
+
+    // Process the direction the player is running relative to where they are looking.
+    private void ProcessRunDirection() {
+        RunDirection newDirection = RunDirection.Forwards;
+
+        if (!animation.Equals(PlayerAnimation.Roll) && IsMoveDirectionBackwards()) {
+            newDirection = RunDirection.Backwards;
+        }
+
+        runDirection = newDirection;
     }
 }
