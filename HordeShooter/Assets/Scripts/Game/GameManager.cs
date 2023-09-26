@@ -10,6 +10,12 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
     
+    [Header ("Enemy Variables")]
+    public float enemySphereCastHeight = 0.5f;
+    public float GetEnemySphereCastHeight() { return enemySphereCastHeight; }
+    public float enemySphereCastRadius = 0.3f;
+    public float GetEnemySphereCastRadius() { return enemySphereCastRadius; }
+    
     [Header ("Player Variables")]
     public float playerAccuracyMaxDeviance = 50.0f;
     public float GetPlayerAccuracyMaxDeviance() { return playerAccuracyMaxDeviance; }
