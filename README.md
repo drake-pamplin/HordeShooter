@@ -21,3 +21,10 @@
 - Procedural maps.
 - Different guns.
 - Boss enemies.
+
+## Ranged Enemy AI
+- Locate player tile.
+- Loop
+    - Navigate to sight line.
+    - Fire number of shots.
+    - Navigate to a new tile nearby.
