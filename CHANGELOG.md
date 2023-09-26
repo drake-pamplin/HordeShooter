@@ -17,3 +17,5 @@ v0.2.0-base-player =============================================================
 - Create player 3D model.
 - Added pillars.
 - Added sprite sort order logic.
+
+v0.3.0-ranged-enemy ===============================================================================
