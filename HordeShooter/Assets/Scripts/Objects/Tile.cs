@@ -11,17 +11,19 @@ public class Tile : MonoBehaviour
         Top
     }
     
-    private Dictionary<TileDirection, GameObject> neighborTiles;
+    private Dictionary<TileDirection, GameObject> neighborTiles = new Dictionary<TileDirection, GameObject>();
     public void AddTile(TileDirection direction, GameObject tile) { neighborTiles.Add(direction, tile); }
     public bool DoesTileExistInDirection(TileDirection direction) { return neighborTiles.ContainsKey(direction); }
+    public Dictionary<TileDirection, GameObject> GetNeighborTiles() { return neighborTiles; }
 
     private bool isTraversable = false;
     public bool IsTraversable() { return isTraversable; }
+    public void SetTraversable(bool isTraversable) { this.isTraversable = isTraversable; }
     
     // Start is called before the first frame update
     void Start()
     {
-        neighborTiles = new Dictionary<TileDirection, GameObject>();
+        
     }
 
     // Update is called once per frame
