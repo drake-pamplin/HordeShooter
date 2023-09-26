@@ -9,3 +9,11 @@ v0.1.0-map-base ================================================================
 - Added logic for reading in and cataloguing prefabs.
 
 v0.2.0-base-player ================================================================================
+- Added player object.
+- Added to player:
+    - Movement
+    - Animation
+    - Attack
+- Create player 3D model.
+- Added pillars.
+- Added sprite sort order logic.
