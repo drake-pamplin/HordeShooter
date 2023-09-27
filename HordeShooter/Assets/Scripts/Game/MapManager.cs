@@ -160,6 +160,36 @@ public class MapManager : MonoBehaviour
         return spriteName;
     }
 
+    // Get the route between points.
+    public List<Vector3> GetRouteBetweenPoints(GameObject originTile, GameObject destinationTile) {
+        // Create queue and load with tile at origin point.
+        Queue<GameObject> checkTiles = new Queue<GameObject>();
+        originTile.GetComponent<Tile>().SetPathStep(0);
+        checkTiles.Enqueue(originTile);
+
+        int deadDropCounter = 0;
+        bool pathFound = false;
+        while (deadDropCounter < 100000 && pathFound == false) {
+            // For each tile, get each neighbor.
+            GameObject checkTile = checkTiles.Dequeue();
+            Tile tileScript = checkTile.GetComponent<Tile>();
+            foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.Direction))) {
+                // For each neighbor, check if the neighbor tile is eligible to be the next step in the path.
+                // Eligible tiles have their path step value set and are added to the queue for the next round.
+                GameObject neighborTile = tileScript.GetTileInDirection(tileDirection);
+                if (neighborTile == null) {
+                    continue;
+                }
+                Tile neighborTileScript = neighborTile.GetComponent<Tile>();
+                
+                if (tileScript.GetPathStep() + 1 < neighborTileScript.GetPathStep()) {
+                    neighborTileScript.SetPathStep(tileScript.GetPathStep() + 1);
+                    checkTiles.Enqueue(neighborTile);
+                }
+            }
+        }
+    }
+
     // Get the orientation of a wall inner corner piece.
     private int GetWallInnerCornerOrientation(int mapIndex) {
         // Check diagonals for a space tile.

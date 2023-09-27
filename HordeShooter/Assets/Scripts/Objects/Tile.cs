@@ -13,10 +13,23 @@ public class Tile : MonoBehaviour
     
     private Dictionary<TileDirection, GameObject> neighborTiles;
     public void AddTile(TileDirection direction, GameObject tile) { neighborTiles.Add(direction, tile); }
-    public bool DoesTileExistInDirection(TileDirection direction) { return neighborTiles.ContainsKey(direction); }
+    public GameObject GetTileInDirection(TileDirection direction) {
+        GameObject tile = null;
+        neighborTiles.TryGetValue(direction, out tile);
+        return tile;
+    }
+
+    private int tileIndex = 0;
+    public int GetTileIndex() { return tileIndex; }
+    public void SetTileIndex(int tileIndex) { this.tileIndex = tileIndex; }
 
     private bool isTraversable = false;
     public bool IsTraversable() { return isTraversable; }
+
+    private int pathStep = 99999;
+    public int GetPathStep() { return pathStep; }
+    public void SetPathStep(int pathStep) { this.pathStep = pathStep; }
+    public void ResetPathStep() { pathStep = 99999; }
     
     // Start is called before the first frame update
     void Start()
