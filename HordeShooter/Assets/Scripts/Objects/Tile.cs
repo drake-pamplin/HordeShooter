@@ -11,7 +11,7 @@ public class Tile : MonoBehaviour
         Top
     }
     
-    private Dictionary<TileDirection, GameObject> neighborTiles;
+    private Dictionary<TileDirection, GameObject> neighborTiles = new Dictionary<TileDirection, GameObject>();
     public void AddTile(TileDirection direction, GameObject tile) { neighborTiles.Add(direction, tile); }
     public GameObject GetTileInDirection(TileDirection direction) {
         GameObject tile = null;
@@ -25,6 +25,7 @@ public class Tile : MonoBehaviour
 
     private bool isTraversable = false;
     public bool IsTraversable() { return isTraversable; }
+    public void SetTraversable(bool isTraversable) { this.isTraversable = isTraversable; }
 
     private int pathStep = 99999;
     public int GetPathStep() { return pathStep; }
@@ -34,7 +35,7 @@ public class Tile : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        neighborTiles = new Dictionary<TileDirection, GameObject>();
+        
     }
 
     // Update is called once per frame

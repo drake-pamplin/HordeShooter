@@ -17,7 +17,7 @@ public class MapManager : MonoBehaviour
     private string mapObjectString;
     private int mapHeight;
     private int mapWidth;
-    private List<GameObject> mapTiles = new List<GameObject>();
+    private Dictionary<int, GameObject> mapTiles = new Dictionary<int, GameObject>();
     
     // Start is called before the first frame update
     void Start()
@@ -34,10 +34,10 @@ public class MapManager : MonoBehaviour
     // Build map
     public void BuildMap() {
         if (mapTiles.Count != 0) {
-            foreach (GameObject tile in mapTiles) {
-                Destroy(tile);
+            foreach (KeyValuePair<int, GameObject> entry in mapTiles) {
+                Destroy(entry.Value);
             }
-            mapTiles = new List<GameObject>();
+            mapTiles = new Dictionary<int, GameObject>();
         }
 
         if ("".Equals(mapTerrainString)) {
@@ -49,6 +49,15 @@ public class MapManager : MonoBehaviour
             CreateTerrainTile(mapIndex);
             CreateObjectTile(mapIndex);
         }
+
+        // int checkTile = 732;
+        // string tileOutput = "Tile " + checkTile + ":";
+        // foreach (KeyValuePair<Tile.TileDirection, GameObject> entry in mapTiles[checkTile].GetComponent<Tile>().GetNeighborTiles()) {
+        //     tileOutput += "\n\n";
+        //     tileOutput += entry.Key.ToString() + " tile: " + entry.Value.name;
+        //     tileOutput += "\n" + entry.Value.GetComponent<Tile>().IsTraversable();
+        // }
+        // Debug.Log(tileOutput);
     }
 
     // Create object tile.
@@ -76,6 +85,11 @@ public class MapManager : MonoBehaviour
             Quaternion.identity
         );
         mapTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + mapIndex;
+        Tile tileScript = mapTile.GetComponent<Tile>();
+        // Set the tile to be traversable if it is a floor tile.
+        if (mapTerrainString[mapIndex].Equals(Constants.tileFloor)) {
+            tileScript.SetTraversable(true);
+        }
 
         // Create a wall collider.
         if (mapTerrainString[mapIndex].Equals(Constants.tileWall)) {
@@ -83,16 +97,26 @@ public class MapManager : MonoBehaviour
                 PrefabManager.instance.GetPrefab(Constants.gameObjectWallObject),
                 mapTile.transform
             );
+            // Set tile to non-traversable if it is a wall.
+            tileScript.SetTraversable(false);
         }
         
         string spriteName = GetBaseSpriteName(mapIndex);
         if (spriteName.Equals(Constants.valueNada)) {
+            if (mapTerrainString[mapIndex].Equals(Constants.tileWall)) {
+                SetTileNeighbors(mapIndex, mapTile);
+                tileScript.SetTraversable(false);
+                mapTiles.Add(mapIndex, mapTile);
+            }
             return;
         }
         GameObject sprite = Instantiate(
             PrefabManager.instance.GetPrefab(spriteName),
             mapTile.transform
         );
+
+        // Set tile neighbors.
+        SetTileNeighbors(mapIndex, mapTile);
         
         int orientation = -1;
         // Orient a wall piece
@@ -113,6 +137,8 @@ public class MapManager : MonoBehaviour
                 sprite.transform.eulerAngles.z
             );
         }
+
+        mapTiles.Add(mapIndex, mapTile);
     }
     
 
@@ -537,5 +563,30 @@ public class MapManager : MonoBehaviour
             mapRender += mapTerrainString[mapIndex];
         }
         Debug.Log(mapRender);
+    }
+
+    // Set the neighbors of a tile.
+    private void SetTileNeighbors(int mapIndex, GameObject mapTile) {
+        // Top
+        GameObject topTile = null;
+        mapTiles.TryGetValue(mapIndex - mapWidth, out topTile);
+        if (topTile != null) {
+            // Set the above tile's lower neighbor.
+            topTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Bottom, mapTile);
+
+            // Set the current tile's upper neighbor.
+            mapTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Top, topTile);
+        }
+        
+        // Left
+        GameObject leftTile = null;
+        mapTiles.TryGetValue(mapIndex - 1, out leftTile);
+        if (leftTile != null && (mapIndex - 1) % mapWidth != mapWidth - 1) {
+            // Set the left tile's right neighbor.
+            leftTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Right, mapTile);
+
+            // Set the current tile's left neighbor.
+            mapTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Left, leftTile);
+        }
     }
 }
