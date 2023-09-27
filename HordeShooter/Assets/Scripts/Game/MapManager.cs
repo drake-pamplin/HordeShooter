@@ -272,11 +272,24 @@ public class MapManager : MonoBehaviour
         // Simplify route.
         List<GameObject> simpleRoute = new List<GameObject>();
         GameObject checkPoint = route[0];
+        int checkPointIndex = 0;
         deadDropCounter = 0;
         while (deadDropCounter < 100000) {
             deadDropCounter++;
 
             // From the check point, move up in the route and raycast until an obstacle is detected.
+            simpleRoute.Add(checkPoint);
+            GameObject nextPoint = route[checkPointIndex];
+            for (int checkIndex = checkPointIndex + 1; checkIndex < route.Count; checkIndex++) {
+                Vector3 checkOriginPosition = checkPoint.transform.position;
+                checkOriginPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+                Vector3 checkDestinationPosition = nextPoint.transform.position;
+                checkDestinationPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+                float checkDistance = Vector3.Distance(checkOriginPosition, checkDestinationPosition);
+                Vector3 raycastDirection = checkDestinationPosition - checkOriginPosition;
+                RaycastHit hit;
+                // if (Physics.SphereCast(checkOriginPosition, GameManager.instance.GetEnemySphereCastRadius(), ))
+            }
         }
 
         return new List<Vector3>();
