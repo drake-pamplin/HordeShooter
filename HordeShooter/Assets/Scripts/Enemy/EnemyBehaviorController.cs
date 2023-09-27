@@ -17,6 +17,11 @@ public class EnemyBehaviorController : MonoBehaviour
     void Start()
     {
         enemyMovementController = GetComponent<EnemyMovementController>();
+
+        // Test pathing.
+        GameObject tileBelowSelf = GetTileBelowSelf();
+        GameObject tileBelowPlayer = MapManager.instance.GetTileBelowPlayer();
+        MapManager.instance.GetRouteBetweenPoints(tileBelowSelf, tileBelowPlayer);
     }
 
     // Update is called once per frame
@@ -35,6 +40,25 @@ public class EnemyBehaviorController : MonoBehaviour
         // Attack state
 
         // Scatter state
+    }
+
+    // Get tile below player.
+    private GameObject GetTileBelowSelf() {
+        // Raycast down.
+        GameObject tileDown = null;
+        Vector3 raycastPosition = transform.position;
+        raycastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+        Vector3 raycastDirection = Vector3.down;
+        RaycastHit hit;
+        if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 5)) {
+            if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
+                tileDown = hit.collider.gameObject;
+                Debug.Log("Enemy tile: " + tileDown.name);
+            }
+        }
+
+        // Return tile.
+        return tileDown;
     }
 
     // Handle move logic.

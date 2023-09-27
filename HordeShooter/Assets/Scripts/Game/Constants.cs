@@ -44,6 +44,7 @@ public class Constants : MonoBehaviour
 
     public readonly static string tagObject = "Object";
     public readonly static string tagPlayer = "Player";
+    public readonly static string tagTile = "Tile";
     public readonly static string tagWall = "Wall";
 
     public readonly static char tileFill = '.';

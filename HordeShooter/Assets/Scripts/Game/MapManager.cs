@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class MapManager : MonoBehaviour
@@ -90,6 +91,7 @@ public class MapManager : MonoBehaviour
         if (mapTerrainString[mapIndex].Equals(Constants.tileFloor)) {
             tileScript.SetTraversable(true);
         }
+        tileScript.SetTileIndex(mapIndex);
 
         // Create a wall collider.
         if (mapTerrainString[mapIndex].Equals(Constants.tileWall)) {
@@ -193,13 +195,22 @@ public class MapManager : MonoBehaviour
         originTile.GetComponent<Tile>().SetPathStep(0);
         checkTiles.Enqueue(originTile);
 
+        Tile destinationTileScript = destinationTile.GetComponent<Tile>();
+
         int deadDropCounter = 0;
-        bool pathFound = false;
-        while (deadDropCounter < 100000 && pathFound == false) {
+        while (deadDropCounter < 100000) {
+            deadDropCounter++;
+            
             // For each tile, get each neighbor.
             GameObject checkTile = checkTiles.Dequeue();
             Tile tileScript = checkTile.GetComponent<Tile>();
-            foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.Direction))) {
+
+            // Check if the path has been found.
+            if (tileScript.GetTileIndex() == destinationTileScript.GetTileIndex()) {
+                break;
+            }
+
+            foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                 // For each neighbor, check if the neighbor tile is eligible to be the next step in the path.
                 // Eligible tiles have their path step value set and are added to the queue for the next round.
                 GameObject neighborTile = tileScript.GetTileInDirection(tileDirection);
@@ -208,12 +219,86 @@ public class MapManager : MonoBehaviour
                 }
                 Tile neighborTileScript = neighborTile.GetComponent<Tile>();
                 
-                if (tileScript.GetPathStep() + 1 < neighborTileScript.GetPathStep()) {
+                if (neighborTileScript.IsTraversable() && tileScript.GetPathStep() + 1 < neighborTileScript.GetPathStep()) {
                     neighborTileScript.SetPathStep(tileScript.GetPathStep() + 1);
                     checkTiles.Enqueue(neighborTile);
                 }
             }
         }
+        if (deadDropCounter == 100000) {
+            Debug.Log("Timed out in pathfinding.");
+        }
+
+        // Get the route starting from the destination.
+        List<GameObject> route = new List<GameObject>();
+        GameObject pathTile = destinationTile;
+        route.Add(pathTile);
+        deadDropCounter = 0;
+        while (deadDropCounter < 100000) {
+            deadDropCounter++;
+            
+            Tile tileScript = pathTile.GetComponent<Tile>();
+            if (tileScript.GetPathStep() == 0) {
+                break;
+            }
+            foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
+                GameObject neighborTile = tileScript.GetTileInDirection(tileDirection);
+                if (neighborTile == null) {
+                    continue;
+                }
+                Tile neighborTileScript = neighborTile.GetComponent<Tile>();
+
+                if (neighborTileScript.GetPathStep() == tileScript.GetPathStep() - 1) {
+                    pathTile = neighborTile;
+                    route.Add(pathTile);
+                    break;
+                }
+            }
+        }
+        if (deadDropCounter == 100000) {
+            Debug.Log("Timed out in routing.");
+        }
+
+        // Reverse path order.
+        route.Reverse();
+
+        // Output path.
+        string outputString = "Route:\n";
+        foreach (GameObject routeStep in route) {
+            outputString += "\n" + routeStep.GetComponent<Tile>().GetTileIndex();
+        }
+        Debug.Log(outputString);
+
+        // Simplify route.
+        List<GameObject> simpleRoute = new List<GameObject>();
+        GameObject checkPoint = route[0];
+        deadDropCounter = 0;
+        while (deadDropCounter < 100000) {
+            deadDropCounter++;
+
+            // From the check point, move up in the route and raycast until an obstacle is detected.
+        }
+
+        return new List<Vector3>();
+    }
+
+    // Get the tile below the player.
+    public GameObject GetTileBelowPlayer() {
+        // Raycast down.
+        GameObject tileDown = null;
+        Vector3 raycastPosition = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
+        raycastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+        Vector3 raycastDirection = Vector3.down;
+        RaycastHit hit;
+        if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 5)) {
+            if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
+                tileDown = hit.collider.gameObject;
+                Debug.Log("Player tile: " + tileDown.name);
+            }
+        }
+
+        // Return tile.
+        return tileDown;
     }
 
     // Get the orientation of a wall inner corner piece.
