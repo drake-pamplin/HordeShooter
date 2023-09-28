@@ -88,7 +88,12 @@ public class EnemyBehaviorController : MonoBehaviour
         playerSphereCastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
         Vector3 sphereCastDirection = playerSphereCastPosition - sphereCastPosition;
         RaycastHit sphereCastHit;
-        if (Physics.SphereCast(sphereCastPosition, radius, sphereCastDirection, out sphereCastHit, 100)) {
+        // if (Physics.SphereCast(sphereCastPosition, radius, sphereCastDirection, out sphereCastHit, 100)) {
+        //     if (sphereCastHit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
+        //         playerInSight = true;
+        //     }
+        // }
+        if (Physics.Raycast(sphereCastPosition, sphereCastDirection, out sphereCastHit, 100)) {
             if (sphereCastHit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
                 playerInSight = true;
             }

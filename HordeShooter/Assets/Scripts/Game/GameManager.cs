@@ -39,6 +39,8 @@ public class GameManager : MonoBehaviour
     public float GetPlayerRollSpeed() { return playerRollSpeed; }
 
     [Header ("World Variables")]
+    public LayerMask worldEntityMask;
+    public LayerMask GetWorldEntityMask() { return worldEntityMask; }
     public float worldGravity = 9.8f;
     public float GetWorldGravity() { return worldGravity; }
     

@@ -27,7 +27,7 @@ public class Tile : MonoBehaviour
     public bool IsTraversable() { return isTraversable; }
     public void SetTraversable(bool isTraversable) { this.isTraversable = isTraversable; }
 
-    private int pathStep = 99999;
+    public int pathStep = 99999;
     public int GetPathStep() { return pathStep; }
     public void SetPathStep(int pathStep) { this.pathStep = pathStep; }
     public void ResetPathStep() { pathStep = 99999; }

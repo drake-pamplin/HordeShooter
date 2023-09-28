@@ -191,6 +191,15 @@ public class MapManager : MonoBehaviour
 
     // Get the route between points.
     public List<Vector3> GetRouteBetweenPoints(GameObject originTile, GameObject destinationTile) {
+        // Clean up tiles.
+        foreach (KeyValuePair<int, GameObject> entry in mapTiles) {
+            entry.Value.GetComponent<Tile>().ResetPathStep();
+        }
+
+        if (originTile.GetComponent<Tile>().GetTileIndex() == destinationTile.GetComponent<Tile>().GetTileIndex()) {
+            return new List<Vector3> { originTile.transform.position };
+        }
+        
         // Create queue and load with tile at origin point.
         Queue<GameObject> checkTiles = new Queue<GameObject>();
         originTile.GetComponent<Tile>().SetPathStep(0);
@@ -205,11 +214,6 @@ public class MapManager : MonoBehaviour
             // For each tile, get each neighbor.
             GameObject checkTile = checkTiles.Dequeue();
             Tile tileScript = checkTile.GetComponent<Tile>();
-
-            // Check if the path has been found.
-            // if (tileScript.GetTileIndex() == destinationTileScript.GetTileIndex()) {
-            //     break;
-            // }
 
             foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                 // For each neighbor, check if the neighbor tile is eligible to be the next step in the path.
@@ -254,7 +258,6 @@ public class MapManager : MonoBehaviour
                     route.Add(pathTile);
                     break;
                 }
-                Debug.Log(pathTile.name);
             }
         }
         if (deadDropCounter == 10000) {
@@ -275,6 +278,9 @@ public class MapManager : MonoBehaviour
             deadDropCounter++;
 
             // From the check point, move up in the route and raycast until an obstacle is detected.
+            if (route.Count == 1) {
+                break;
+            }
             simpleRoute.Add(checkPoint);
             for (int checkIndex = checkPointIndex; checkIndex < route.Count; checkIndex++) {
                 // Check for end of route.
@@ -290,9 +296,10 @@ public class MapManager : MonoBehaviour
                 checkDestinationPosition.y = GameManager.instance.GetEnemySphereCastHeight();
                 float checkDistance = Vector3.Distance(checkOriginPosition, checkDestinationPosition);
                 Vector3 raycastDirection = checkDestinationPosition - checkOriginPosition;
+                LayerMask entityLayer = GameManager.instance.GetWorldEntityMask();
                 RaycastHit hit;
                 bool blocked = false;
-                if (Physics.SphereCast(checkOriginPosition, GameManager.instance.GetEnemySphereCastRadius(), raycastDirection, out hit, checkDistance)) {
+                if (Physics.SphereCast(checkOriginPosition, GameManager.instance.GetEnemySphereCastRadius(), raycastDirection, out hit, checkDistance, ~entityLayer)) {
                     blocked = true;
                 }
                 if (blocked) {
@@ -303,13 +310,18 @@ public class MapManager : MonoBehaviour
                     previousPoint = route[checkIndex];
                 }
             }
-            Debug.Log(checkPointIndex + ", " + route.Count);
             if (checkPointIndex == route.Count - 1) {
                 break;
             }
         }
         simpleRoute.Add(route[route.Count - 1]);
         if (deadDropCounter == 10000) {
+            Debug.Log(
+                "Check point: " + checkPoint.name +
+                "\nCheck point index: " + checkPointIndex +
+                "\nPrevious point: " + previousPoint.name +
+                "\nSimplified route count: " + simpleRoute.Count
+            );
             Debug.Log("Timed out at simplification.");
         }
 
@@ -317,11 +329,6 @@ public class MapManager : MonoBehaviour
         List<Vector3> routePoints = new List<Vector3>();
         foreach (GameObject tile in simpleRoute) {
             routePoints.Add(tile.transform.position);
-        }
-
-        // Clean up tiles.
-        foreach (KeyValuePair<int, GameObject> entry in mapTiles) {
-            entry.Value.GetComponent<Tile>().ResetPathStep();
         }
 
         return routePoints;
