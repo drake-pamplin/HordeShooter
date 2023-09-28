@@ -19,9 +19,9 @@ public class EnemyBehaviorController : MonoBehaviour
         enemyMovementController = GetComponent<EnemyMovementController>();
 
         // Test pathing.
-        GameObject tileBelowSelf = GetTileBelowSelf();
-        GameObject tileBelowPlayer = MapManager.instance.GetTileBelowPlayer();
-        MapManager.instance.GetRouteBetweenPoints(tileBelowSelf, tileBelowPlayer);
+        // GameObject tileBelowSelf = GetTileBelowSelf();
+        // GameObject tileBelowPlayer = MapManager.instance.GetTileBelowPlayer();
+        // List<Vector3> route = MapManager.instance.GetRouteBetweenPoints(tileBelowSelf, tileBelowPlayer);
     }
 
     // Update is called once per frame
@@ -43,7 +43,7 @@ public class EnemyBehaviorController : MonoBehaviour
     }
 
     // Get tile below player.
-    private GameObject GetTileBelowSelf() {
+    public GameObject GetTileBelowSelf() {
         // Raycast down.
         GameObject tileDown = null;
         Vector3 raycastPosition = transform.position;
@@ -53,7 +53,7 @@ public class EnemyBehaviorController : MonoBehaviour
         if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 5)) {
             if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
                 tileDown = hit.collider.gameObject;
-                Debug.Log("Enemy tile: " + tileDown.name);
+                // Debug.Log("Enemy tile: " + tileDown.name);
             }
         }
 
@@ -63,18 +63,12 @@ public class EnemyBehaviorController : MonoBehaviour
 
     // Handle move logic.
     private void HandleMove() {
-        // Set player location in the movement controller if it is not set.
-        if (!enemyMovementController.IsPlayerLocationSet()) {
-            Vector3 playerLocation = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
-            enemyMovementController.SetPlayerLocation(playerLocation);
-        }
-
         // Check for a sight line to the player.
         bool lineOfSight = IsPlayerVisible();
 
         // Switch state to attack if sight line is established.
         if (lineOfSight) {
-            enemyBehaviorState = EnemyBehaviorState.Attack;
+            // enemyBehaviorState = EnemyBehaviorState.Attack;
             return;
         }
 

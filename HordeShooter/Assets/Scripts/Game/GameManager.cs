@@ -11,6 +11,10 @@ public class GameManager : MonoBehaviour
     }
     
     [Header ("Enemy Variables")]
+    public float enemyMoveSpeed = 1.0f;
+    public float GetEnemyMoveSpeed() { return enemyMoveSpeed; }
+    public float enemyPathfindingTick = 0.25f;
+    public float GetEnemyPathfindingTick() { return enemyPathfindingTick; }
     public float enemySphereCastHeight = 0.5f;
     public float GetEnemySphereCastHeight() { return enemySphereCastHeight; }
     public float enemySphereCastRadius = 0.3f;

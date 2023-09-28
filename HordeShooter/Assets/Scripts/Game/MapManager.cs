@@ -76,6 +76,7 @@ public class MapManager : MonoBehaviour
             Quaternion.identity
         );
         objectSprite.name = spriteName;
+        mapTiles[mapIndex].GetComponent<Tile>().SetTraversable(false);
     }
 
     // Create terrain tile.
@@ -198,7 +199,7 @@ public class MapManager : MonoBehaviour
         Tile destinationTileScript = destinationTile.GetComponent<Tile>();
 
         int deadDropCounter = 0;
-        while (deadDropCounter < 100000) {
+        while (deadDropCounter < 10000 && checkTiles.Count != 0) {
             deadDropCounter++;
             
             // For each tile, get each neighbor.
@@ -206,9 +207,9 @@ public class MapManager : MonoBehaviour
             Tile tileScript = checkTile.GetComponent<Tile>();
 
             // Check if the path has been found.
-            if (tileScript.GetTileIndex() == destinationTileScript.GetTileIndex()) {
-                break;
-            }
+            // if (tileScript.GetTileIndex() == destinationTileScript.GetTileIndex()) {
+            //     break;
+            // }
 
             foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                 // For each neighbor, check if the neighbor tile is eligible to be the next step in the path.
@@ -225,7 +226,7 @@ public class MapManager : MonoBehaviour
                 }
             }
         }
-        if (deadDropCounter == 100000) {
+        if (deadDropCounter == 10000) {
             Debug.Log("Timed out in pathfinding.");
         }
 
@@ -234,7 +235,7 @@ public class MapManager : MonoBehaviour
         GameObject pathTile = destinationTile;
         route.Add(pathTile);
         deadDropCounter = 0;
-        while (deadDropCounter < 100000) {
+        while (deadDropCounter < 10000) {
             deadDropCounter++;
             
             Tile tileScript = pathTile.GetComponent<Tile>();
@@ -253,34 +254,36 @@ public class MapManager : MonoBehaviour
                     route.Add(pathTile);
                     break;
                 }
+                Debug.Log(pathTile.name);
             }
         }
-        if (deadDropCounter == 100000) {
+        if (deadDropCounter == 10000) {
             Debug.Log("Timed out in routing.");
         }
 
-        // Reverse path order.
+        // Reverse path order and remove the tile the player is on.
         route.Reverse();
-
-        // Output path.
-        string outputString = "Route:\n";
-        foreach (GameObject routeStep in route) {
-            outputString += "\n" + routeStep.GetComponent<Tile>().GetTileIndex();
-        }
-        Debug.Log(outputString);
+        route.RemoveAt(route.Count - 1);
 
         // Simplify route.
         List<GameObject> simpleRoute = new List<GameObject>();
         GameObject checkPoint = route[0];
-        int checkPointIndex = 0;
+        int checkPointIndex = 1;
+        GameObject previousPoint = checkPoint;
         deadDropCounter = 0;
-        while (deadDropCounter < 100000) {
+        while (deadDropCounter < 10000) {
             deadDropCounter++;
 
             // From the check point, move up in the route and raycast until an obstacle is detected.
             simpleRoute.Add(checkPoint);
-            GameObject nextPoint = route[checkPointIndex];
-            for (int checkIndex = checkPointIndex + 1; checkIndex < route.Count; checkIndex++) {
+            for (int checkIndex = checkPointIndex; checkIndex < route.Count; checkIndex++) {
+                // Check for end of route.
+                if (checkIndex == route.Count - 1) {
+                    checkPointIndex = checkIndex;
+                    break;
+                }
+                
+                GameObject nextPoint = route[checkIndex];
                 Vector3 checkOriginPosition = checkPoint.transform.position;
                 checkOriginPosition.y = GameManager.instance.GetEnemySphereCastHeight();
                 Vector3 checkDestinationPosition = nextPoint.transform.position;
@@ -288,11 +291,40 @@ public class MapManager : MonoBehaviour
                 float checkDistance = Vector3.Distance(checkOriginPosition, checkDestinationPosition);
                 Vector3 raycastDirection = checkDestinationPosition - checkOriginPosition;
                 RaycastHit hit;
-                // if (Physics.SphereCast(checkOriginPosition, GameManager.instance.GetEnemySphereCastRadius(), ))
+                bool blocked = false;
+                if (Physics.SphereCast(checkOriginPosition, GameManager.instance.GetEnemySphereCastRadius(), raycastDirection, out hit, checkDistance)) {
+                    blocked = true;
+                }
+                if (blocked) {
+                    checkPoint = previousPoint;
+                    checkPointIndex = checkIndex;
+                    break;
+                } else {
+                    previousPoint = route[checkIndex];
+                }
+            }
+            Debug.Log(checkPointIndex + ", " + route.Count);
+            if (checkPointIndex == route.Count - 1) {
+                break;
             }
         }
+        simpleRoute.Add(route[route.Count - 1]);
+        if (deadDropCounter == 10000) {
+            Debug.Log("Timed out at simplification.");
+        }
 
-        return new List<Vector3>();
+        // Get tile locations for route.
+        List<Vector3> routePoints = new List<Vector3>();
+        foreach (GameObject tile in simpleRoute) {
+            routePoints.Add(tile.transform.position);
+        }
+
+        // Clean up tiles.
+        foreach (KeyValuePair<int, GameObject> entry in mapTiles) {
+            entry.Value.GetComponent<Tile>().ResetPathStep();
+        }
+
+        return routePoints;
     }
 
     // Get the tile below the player.
@@ -306,7 +338,7 @@ public class MapManager : MonoBehaviour
         if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 5)) {
             if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
                 tileDown = hit.collider.gameObject;
-                Debug.Log("Player tile: " + tileDown.name);
+                // Debug.Log("Player tile: " + tileDown.name);
             }
         }
 
