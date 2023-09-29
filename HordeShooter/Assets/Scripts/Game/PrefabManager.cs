@@ -49,6 +49,12 @@ public class PrefabManager : MonoBehaviour
         prefab = Resources.Load<GameObject>(filePath);
         prefabLibrary.Add(objectName, prefab);
 
+        // Munitions prefabs
+        objectName = Constants.gameObjectProjectile;
+        filePath = Constants.fileMunitionsPath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
+
         // VFX prefabs
         objectName = Constants.gameObjectMuzzleFlare;
         filePath = Constants.fileVFXPath + objectName;

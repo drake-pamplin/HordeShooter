@@ -9,6 +9,7 @@ public class Constants : MonoBehaviour
     public readonly static string extensionTxt = ".txt";
     
     public readonly static string fileMapDirPath = "Assets/Resources/Maps/";
+    public readonly static string fileMunitionsPath = "Prefabs/Munitions/";
     public readonly static string fileObjectPath = "Prefabs/Tile/Objects/";
     public readonly static string fileTilePrefabPath = "Prefabs/Tile/";
     public readonly static string fileTileSpritePath = "Prefabs/Tile/Sprites/";
@@ -20,6 +21,7 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
     public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
     public readonly static string gameObjectPillar = "Pillar";
+    public readonly static string gameObjectProjectile = "Projectile";
     public readonly static string gameObjectReloadIndicator = "ReloadIndicator";
     public readonly static string gameObjectRicochetObject = "RicochetObject";
     public readonly static string gameObjectRotationReference = "RotationReference";

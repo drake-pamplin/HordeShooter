@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     public float GetEnemyMoveSpeed() { return enemyMoveSpeed; }
     public float enemyPathfindingTick = 0.25f;
     public float GetEnemyPathfindingTick() { return enemyPathfindingTick; }
+    public float enemyPauseDuration = 1.0f;
+    public float GetEnemyPauseDuration() { return enemyPauseDuration; }
     public float enemyProjectileSpeed = 10.0f;
     public float GetEnemyProjectileSpeed() { return enemyProjectileSpeed; }
     public float enemySphereCastHeight = 0.5f;

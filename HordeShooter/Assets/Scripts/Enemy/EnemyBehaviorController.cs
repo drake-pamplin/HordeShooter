@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class EnemyBehaviorController : MonoBehaviour
 {
+    private EnemyAttackController enemyAttackController;
     private EnemyMovementController enemyMovementController;
     
     private enum EnemyBehaviorState {
@@ -12,10 +13,13 @@ public class EnemyBehaviorController : MonoBehaviour
         Scatter
     }
     private EnemyBehaviorState enemyBehaviorState = EnemyBehaviorState.Move;
+
+    private float pauseDuration = 0;
     
     // Start is called before the first frame update
     void Start()
     {
+        enemyAttackController = GetComponent<EnemyAttackController>();
         enemyMovementController = GetComponent<EnemyMovementController>();
 
         // Test pathing.
@@ -32,14 +36,21 @@ public class EnemyBehaviorController : MonoBehaviour
 
     // Process enemy behavior loop.
     private void ProcessEnemyBehavior() {
+        pauseDuration = pauseDuration > 0 ? pauseDuration - Time.deltaTime : 0;
+        if (pauseDuration > 0) {
+            return;
+        }
+        
         // Move state
         if (enemyBehaviorState.Equals(EnemyBehaviorState.Move)) {
             HandleMove();
+            return;
         }
 
         // Attack state
         if (enemyBehaviorState.Equals(EnemyBehaviorState.Attack)) {
             HandleAttack();
+            return;
         }
 
         // Scatter state
@@ -65,7 +76,9 @@ public class EnemyBehaviorController : MonoBehaviour
 
     // Handle attack logic.
     private void HandleAttack() {
+        enemyAttackController.AttackPlayer();
         enemyBehaviorState = EnemyBehaviorState.Move;
+        pauseDuration = GameManager.instance.GetEnemyPauseDuration();
     }
 
     // Handle move logic.
@@ -76,6 +89,7 @@ public class EnemyBehaviorController : MonoBehaviour
         // Switch state to attack if sight line is established.
         if (lineOfSight) {
             enemyBehaviorState = EnemyBehaviorState.Attack;
+            pauseDuration = GameManager.instance.GetEnemyPauseDuration();
             return;
         }
 
