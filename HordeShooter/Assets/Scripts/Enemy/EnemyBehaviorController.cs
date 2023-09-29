@@ -38,6 +38,9 @@ public class EnemyBehaviorController : MonoBehaviour
         }
 
         // Attack state
+        if (enemyBehaviorState.Equals(EnemyBehaviorState.Attack)) {
+            HandleAttack();
+        }
 
         // Scatter state
     }
@@ -53,12 +56,16 @@ public class EnemyBehaviorController : MonoBehaviour
         if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 5)) {
             if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
                 tileDown = hit.collider.gameObject;
-                // Debug.Log("Enemy tile: " + tileDown.name);
             }
         }
 
         // Return tile.
         return tileDown;
+    }
+
+    // Handle attack logic.
+    private void HandleAttack() {
+        enemyBehaviorState = EnemyBehaviorState.Move;
     }
 
     // Handle move logic.
@@ -68,7 +75,7 @@ public class EnemyBehaviorController : MonoBehaviour
 
         // Switch state to attack if sight line is established.
         if (lineOfSight) {
-            // enemyBehaviorState = EnemyBehaviorState.Attack;
+            enemyBehaviorState = EnemyBehaviorState.Attack;
             return;
         }
 
@@ -80,20 +87,15 @@ public class EnemyBehaviorController : MonoBehaviour
     private bool IsPlayerVisible() {
         bool playerInSight = false;
         
-        // Spherecast to the player.
-        Vector3 sphereCastPosition = transform.position;
-        sphereCastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+        // Raycast to the player.
+        Vector3 raycastPosition = transform.position;
+        raycastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
         float radius = GameManager.instance.GetEnemySphereCastRadius();
-        Vector3 playerSphereCastPosition = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
-        playerSphereCastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
-        Vector3 sphereCastDirection = playerSphereCastPosition - sphereCastPosition;
+        Vector3 playerRaycastPosition = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
+        playerRaycastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
+        Vector3 sphereCastDirection = playerRaycastPosition - raycastPosition;
         RaycastHit sphereCastHit;
-        // if (Physics.SphereCast(sphereCastPosition, radius, sphereCastDirection, out sphereCastHit, 100)) {
-        //     if (sphereCastHit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
-        //         playerInSight = true;
-        //     }
-        // }
-        if (Physics.Raycast(sphereCastPosition, sphereCastDirection, out sphereCastHit, 100)) {
+        if (Physics.Raycast(raycastPosition, sphereCastDirection, out sphereCastHit, 100)) {
             if (sphereCastHit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
                 playerInSight = true;
             }
