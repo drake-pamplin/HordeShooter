@@ -625,6 +625,7 @@ MonoBehaviour:
   enemyPathfindingTick: 2
   enemyPauseDuration: 1
   enemyProjectileSpeed: 10
+  enemyScatterMoveMaxTime: 4
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
   playerAccuracyMaxDeviance: 10

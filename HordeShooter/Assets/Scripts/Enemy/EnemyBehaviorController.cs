@@ -14,6 +14,14 @@ public class EnemyBehaviorController : MonoBehaviour
     }
     private EnemyBehaviorState enemyBehaviorState = EnemyBehaviorState.Move;
 
+    private enum ScatterState {
+        Move,
+        Select
+    }
+    private ScatterState scatterState = ScatterState.Select;
+    private float scatterMoveDuration = 0;
+    private int scatterDirectionCount = 0;
+
     private float pauseDuration = 0;
     
     // Start is called before the first frame update
@@ -21,11 +29,6 @@ public class EnemyBehaviorController : MonoBehaviour
     {
         enemyAttackController = GetComponent<EnemyAttackController>();
         enemyMovementController = GetComponent<EnemyMovementController>();
-
-        // Test pathing.
-        // GameObject tileBelowSelf = GetTileBelowSelf();
-        // GameObject tileBelowPlayer = MapManager.instance.GetTileBelowPlayer();
-        // List<Vector3> route = MapManager.instance.GetRouteBetweenPoints(tileBelowSelf, tileBelowPlayer);
     }
 
     // Update is called once per frame
@@ -54,6 +57,10 @@ public class EnemyBehaviorController : MonoBehaviour
         }
 
         // Scatter state
+        if (enemyBehaviorState.Equals(EnemyBehaviorState.Scatter)) {
+            HandleScatter();
+            return;
+        }
     }
 
     // Get tile below player.
@@ -77,7 +84,7 @@ public class EnemyBehaviorController : MonoBehaviour
     // Handle attack logic.
     private void HandleAttack() {
         enemyAttackController.AttackPlayer();
-        enemyBehaviorState = EnemyBehaviorState.Move;
+        enemyBehaviorState = EnemyBehaviorState.Scatter;
         pauseDuration = GameManager.instance.GetEnemyPauseDuration();
     }
 
@@ -95,6 +102,52 @@ public class EnemyBehaviorController : MonoBehaviour
 
         // Move to the player if sight line is not established.
         enemyMovementController.MoveTowardsPlayer();
+    }
+
+    // Handle scatter logic.
+    private void HandleScatter() {
+        // Set number of scatter cycles.
+        if (scatterDirectionCount == 0) {
+            scatterDirectionCount = Random.Range(1, 4);
+        }
+        
+        // Select trajectory.
+        if (scatterState.Equals(ScatterState.Select)) {
+            // Get random trajectory.
+            Vector3 trajectory = new Vector3(
+                Random.Range(-10.0f, 10.0f),
+                0,
+                Random.Range(-10.0f, 10.0f)
+            ).normalized;
+
+            // Set target trajectory in movement controller.
+            enemyMovementController.SetScatterDirection(trajectory);
+
+            scatterMoveDuration = Random.Range(0.0f, GameManager.instance.GetEnemyScatterMoveMaxTime());
+            scatterState = ScatterState.Move;
+            return;
+        }
+
+        // Move the enemy.
+        if (scatterState.Equals(ScatterState.Move)) {
+            if (scatterMoveDuration <= 0) {
+                scatterMoveDuration = 0;
+                scatterState = ScatterState.Select;
+                scatterDirectionCount--;
+
+                // If on the last cycle, change state back to move.
+                if (scatterDirectionCount == 0) {
+                    enemyBehaviorState = EnemyBehaviorState.Move;
+                    pauseDuration = GameManager.instance.GetEnemyPauseDuration();
+                }
+                return;
+            }
+            scatterMoveDuration -= Time.deltaTime;
+
+            // Move the enemy.
+            enemyMovementController.ScatterMove();
+            return;
+        }
     }
 
     // Check if the player is visible.

@@ -10,6 +10,9 @@ public class EnemyMovementController : MonoBehaviour
     private CharacterController controller;
     private List<Vector3> route = new List<Vector3>();
     private int routeIndex = 0;
+
+    private Vector3 scatterDirection = Vector3.zero;
+    public void SetScatterDirection(Vector3 scatterDirection) { this.scatterDirection = scatterDirection; }
     
     // Start is called before the first frame update
     void Start()
@@ -54,5 +57,10 @@ public class EnemyMovementController : MonoBehaviour
         route = MapManager.instance.GetRouteBetweenPoints(tileBelowSelf, tileBelowPlayer);
         routeIndex = 0;
         pathfindingTickElapsedTime = 0;
+    }
+
+    // Move in a scatter pattern.
+    public void ScatterMove() {
+        controller.Move(scatterDirection * Time.deltaTime * GameManager.instance.GetEnemyScatterSpeed());
     }
 }

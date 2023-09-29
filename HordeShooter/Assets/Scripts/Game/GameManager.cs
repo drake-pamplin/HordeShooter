@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     public float GetEnemyPauseDuration() { return enemyPauseDuration; }
     public float enemyProjectileSpeed = 10.0f;
     public float GetEnemyProjectileSpeed() { return enemyProjectileSpeed; }
+    public float enemyScatterMoveMaxTime = 10.0f;
+    public float GetEnemyScatterMoveMaxTime() { return enemyScatterMoveMaxTime; }
+    public float enemyScatterSpeed = 4;
+    public float GetEnemyScatterSpeed() { return enemyScatterSpeed; }
     public float enemySphereCastHeight = 0.5f;
     public float GetEnemySphereCastHeight() { return enemySphereCastHeight; }
     public float enemySphereCastRadius = 0.3f;
