@@ -21,14 +21,15 @@ public class Projectile : MonoBehaviour
         Vector3 raycastPosition = transform.position;
         Vector3 raycastDirection = transform.Find(Constants.gameObjectSprite).up;
         RaycastHit hit;
-        if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 0.5f)) {
+        if (Physics.Raycast(raycastPosition, raycastDirection, out hit, 0.7f)) {
             Collide(hit);
         }
     }
 
     private void Collide(RaycastHit hit) {
-        if (hit.collider.gameObject.CompareTag(Constants.tagWall) || hit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
-            Debug.Log("Hit ")
+        if (hit.collider.gameObject.CompareTag(Constants.tagWall) || hit.collider.gameObject.CompareTag(Constants.tagPlayer) || hit.collider.gameObject.CompareTag(Constants.tagObject)) {
+            Debug.Log("Hit " + hit.collider.gameObject.name);
+            Destroy(gameObject);
         }
     }
 }

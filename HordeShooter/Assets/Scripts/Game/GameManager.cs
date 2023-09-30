@@ -11,6 +11,10 @@ public class GameManager : MonoBehaviour
     }
     
     [Header ("Enemy Variables")]
+    public float enemyFireRate = 0.5f;
+    public float GetEnemyFireRate() { return enemyFireRate; }
+    public int enemyMaxShots = 5;
+    public int GetEnemyMaxShots() { return enemyMaxShots; }
     public float enemyMoveSpeed = 1.0f;
     public float GetEnemyMoveSpeed() { return enemyMoveSpeed; }
     public float enemyPathfindingTick = 0.25f;
@@ -23,6 +27,8 @@ public class GameManager : MonoBehaviour
     public float GetEnemyScatterMoveMaxTime() { return enemyScatterMoveMaxTime; }
     public float enemyScatterSpeed = 4;
     public float GetEnemyScatterSpeed() { return enemyScatterSpeed; }
+    public float enemySightDistance = 5.0f;
+    public float GetEnemySightDistance() { return enemySightDistance; }
     public float enemySphereCastHeight = 0.5f;
     public float GetEnemySphereCastHeight() { return enemySphereCastHeight; }
     public float enemySphereCastRadius = 0.3f;

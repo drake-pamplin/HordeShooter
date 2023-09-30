@@ -23,6 +23,8 @@ public class EnemyBehaviorController : MonoBehaviour
     private int scatterDirectionCount = 0;
 
     private float pauseDuration = 0;
+
+    private int numberOfShots = 0;
     
     // Start is called before the first frame update
     void Start()
@@ -83,9 +85,20 @@ public class EnemyBehaviorController : MonoBehaviour
 
     // Handle attack logic.
     private void HandleAttack() {
+        // Get the number of shots the enemy will fire.
+        if (numberOfShots == 0) {
+            numberOfShots = Random.Range(1, GameManager.instance.GetEnemyMaxShots() + 1);
+        }
+
+        // Execute attack.
         enemyAttackController.AttackPlayer();
-        enemyBehaviorState = EnemyBehaviorState.Scatter;
-        pauseDuration = GameManager.instance.GetEnemyPauseDuration();
+        numberOfShots--;
+        if (numberOfShots > 0) {
+            pauseDuration = GameManager.instance.GetEnemyFireRate();
+        } else {
+            enemyBehaviorState = EnemyBehaviorState.Scatter;
+            pauseDuration = GameManager.instance.GetEnemyPauseDuration();
+        }
     }
 
     // Handle move logic.
@@ -162,7 +175,7 @@ public class EnemyBehaviorController : MonoBehaviour
         playerRaycastPosition.y = GameManager.instance.GetEnemySphereCastHeight();
         Vector3 sphereCastDirection = playerRaycastPosition - raycastPosition;
         RaycastHit sphereCastHit;
-        if (Physics.Raycast(raycastPosition, sphereCastDirection, out sphereCastHit, 100)) {
+        if (Physics.Raycast(raycastPosition, sphereCastDirection, out sphereCastHit, GameManager.instance.GetEnemySightDistance())) {
             if (sphereCastHit.collider.gameObject.CompareTag(Constants.tagPlayer)) {
                 playerInSight = true;
             }
