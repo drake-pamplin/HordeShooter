@@ -13,6 +13,9 @@ public class EnemyBehaviorController : MonoBehaviour
         Scatter
     }
     private EnemyBehaviorState enemyBehaviorState = EnemyBehaviorState.Move;
+    public bool IsMoving() { return enemyBehaviorState.Equals(EnemyBehaviorState.Move); }
+    public bool IsAttacking() { return enemyBehaviorState.Equals(EnemyBehaviorState.Attack); }
+    public bool IsScattering() { return enemyBehaviorState.Equals(EnemyBehaviorState.Scatter); }
 
     private enum ScatterState {
         Move,
@@ -23,6 +26,7 @@ public class EnemyBehaviorController : MonoBehaviour
     private int scatterDirectionCount = 0;
 
     private float pauseDuration = 0;
+    public bool IsPaused() { return pauseDuration != 0; }
 
     private int numberOfShots = 0;
     
@@ -31,6 +35,8 @@ public class EnemyBehaviorController : MonoBehaviour
     {
         enemyAttackController = GetComponent<EnemyAttackController>();
         enemyMovementController = GetComponent<EnemyMovementController>();
+
+        pauseDuration = GameManager.instance.GetEnemyPauseDuration();
     }
 
     // Update is called once per frame
