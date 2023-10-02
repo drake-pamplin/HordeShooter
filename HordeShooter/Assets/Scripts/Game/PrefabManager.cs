@@ -61,6 +61,11 @@ public class PrefabManager : MonoBehaviour
         prefab = Resources.Load<GameObject>(filePath);
         prefabLibrary.Add(objectName, prefab);
 
+        objectName = Constants.gameObjectPlasmaRicochet;
+        filePath = Constants.fileVFXPath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
+
         objectName = Constants.gameObjectRicochetObject;
         filePath = Constants.fileVFXPath + objectName;
         prefab = Resources.Load<GameObject>(filePath);

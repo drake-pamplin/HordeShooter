@@ -21,6 +21,7 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
     public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
     public readonly static string gameObjectPillar = "Pillar";
+    public readonly static string gameObjectPlasmaRicochet = "PlasmaRicochetObject";
     public readonly static string gameObjectProjectile = "Projectile";
     public readonly static string gameObjectReloadIndicator = "ReloadIndicator";
     public readonly static string gameObjectRicochetObject = "RicochetObject";
@@ -44,6 +45,7 @@ public class Constants : MonoBehaviour
     public readonly static string spriteWallSide_0 = "WallSide_0";
     public readonly static string spriteWallSide_1 = "WallSide_1";
 
+    public readonly static string tagEnemy = "Enemy";
     public readonly static string tagObject = "Object";
     public readonly static string tagPlayer = "Player";
     public readonly static string tagTile = "Tile";

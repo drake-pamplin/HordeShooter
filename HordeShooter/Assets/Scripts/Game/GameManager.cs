@@ -11,6 +11,10 @@ public class GameManager : MonoBehaviour
     }
     
     [Header ("Enemy Variables")]
+    public int enemyBaseDefense = 3;
+    public int GetEnemyBaseDefense() { return enemyBaseDefense; }
+    public int enemyBaseHitPoints = 10;
+    public int GetEnemyBaseHitPoints() { return enemyBaseHitPoints; }
     public float enemyFireRate = 0.5f;
     public float GetEnemyFireRate() { return enemyFireRate; }
     public int enemyMaxShots = 5;
@@ -37,6 +41,10 @@ public class GameManager : MonoBehaviour
     [Header ("Player Variables")]
     public float playerAccuracyMaxDeviance = 50.0f;
     public float GetPlayerAccuracyMaxDeviance() { return playerAccuracyMaxDeviance; }
+    public int playerBaseAttack = 5;
+    public int GetPlayerBaseAttack() { return playerBaseAttack; }
+    public int playerBasePenetration = 1;
+    public int GetPlayerBasePenetration() { return playerBasePenetration; }
     public float playerMaxAccuracyDecayFireTime = 3.0f;
     public float GetPlayerMaxAccuracyDecayFireTime() { return playerMaxAccuracyDecayFireTime; }
     public float playerFireRate = 0.2f;

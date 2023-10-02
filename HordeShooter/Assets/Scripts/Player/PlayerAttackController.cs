@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerAttackController : MonoBehaviour
 {
     private PlayerAnimationController playerAnimationController;
+    private PlayerAttributeController playerAttributeController;
     private PlayerMovementController playerMovementController;
     
     // Fire variables
@@ -36,6 +37,7 @@ public class PlayerAttackController : MonoBehaviour
     void Start()
     {
         playerAnimationController = GetComponent<PlayerAnimationController>();
+        playerAttributeController = GetComponent<PlayerAttributeController>();
         playerMovementController = GetComponent<PlayerMovementController>();
 
         ammoInClip = GameManager.instance.GetPlayerClipSize();
@@ -101,6 +103,11 @@ public class PlayerAttackController : MonoBehaviour
         Debug.DrawRay(transform.position, fireReference.transform.forward * 10, Color.red);
         if (Physics.Raycast(rotationReferenceObject.transform.position, fireReference.transform.forward, out hit, 100)) {
             playerAnimationController.CreateRicochet(hit);
+
+            // Perform damage calculation on hit enemy.
+            if (hit.collider.gameObject.CompareTag(Constants.tagEnemy)) {
+                hit.collider.gameObject.GetComponent<EnemyHealthController>().RegisterHit(playerAttributeController.GetAttack(), playerAttributeController.GetPenetration());
+            }
         }
 
         // Subtract bullet from clip.

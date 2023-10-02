@@ -621,7 +621,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 158ca049adf5a6e40a133dd973844a5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyBaseDefense: 3
   enemyFireRate: 0.75
+  enemyBaseHitPoints: 10
   enemyMaxShots: 5
   enemyMoveSpeed: 2
   enemyPathfindingTick: 1
@@ -955,6 +957,7 @@ GameObject:
   - component: {fileID: 1217048362}
   - component: {fileID: 1217048363}
   - component: {fileID: 1217048365}
+  - component: {fileID: 1217048367}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1065,6 +1068,18 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1217048367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1217048360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd506284f840da4dbd248943443540f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1246174406
 GameObject:
   m_ObjectHideFlags: 0
@@ -1662,10 +1677,13 @@ GameObject:
   m_Component:
   - component: {fileID: 2044521870}
   - component: {fileID: 2044521869}
+  - component: {fileID: 2044521874}
   - component: {fileID: 2044521868}
   - component: {fileID: 2044521867}
   - component: {fileID: 2044521871}
   - component: {fileID: 2044521872}
+  - component: {fileID: 2044521873}
+  - component: {fileID: 2044521875}
   m_Layer: 3
   m_Name: Enemy
   m_TagString: Enemy
@@ -1763,5 +1781,50 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96583410fb5ad0f488af08ecbaeff9a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2044521873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044521866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6fd008dff76af7499b228c9f5efcd9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!135 &2044521874
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044521866}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2044521875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044521866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a104ceb5f55dd6f4ca05df71e634df33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
