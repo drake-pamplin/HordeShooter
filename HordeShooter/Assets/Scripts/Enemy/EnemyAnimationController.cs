@@ -7,7 +7,9 @@ public class EnemyAnimationController : MonoBehaviour
     private EnemyBehaviorController enemyBehaviorController;
     
     private enum EnemyAnimation {
+        Death,
         Idle,
+        Fire,
         Run,
         Walk
     }
@@ -29,6 +31,8 @@ public class EnemyAnimationController : MonoBehaviour
     private string currentlyPlayingAnimation = "";
 
     private Vector3 previousPosition;
+
+    private float fireTimeElapsed = 0;
     
     // Start is called before the first frame update
     void Start()
@@ -56,7 +60,9 @@ public class EnemyAnimationController : MonoBehaviour
         animationName += animation.ToString();
 
         // Get the direction.
-        animationName += Constants.splitCharUnderscore + direction.ToString();
+        if (!animation.Equals(EnemyAnimation.Death)) {
+            animationName += Constants.splitCharUnderscore + direction.ToString();
+        }
 
         return animationName;
     }
@@ -90,7 +96,7 @@ public class EnemyAnimationController : MonoBehaviour
 
         Vector3 aimOffset = (currentPosition - previousPosition).normalized;
         if (enemyBehaviorController.IsAttacking()) {
-            aimOffset = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position - transform.position;
+            aimOffset = (GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position - transform.position).normalized;
         }
         
         EnemyDirection newDirection = direction;
@@ -134,6 +140,20 @@ public class EnemyAnimationController : MonoBehaviour
 
     // Process the animation state of the enemy.
     private void ProcessMoveState() {
+        // Do not process animation state if dead.
+        if (animation.Equals(EnemyAnimation.Death)) {
+            return;
+        }
+        
+        // Do not process animation state if firing.
+        if (fireTimeElapsed > 0) {
+            fireTimeElapsed -= Time.deltaTime;
+            return;
+        }
+        if (fireTimeElapsed < 0) {
+            fireTimeElapsed = 0;
+        }
+        
         EnemyAnimation newAnimation = EnemyAnimation.Idle;
 
         if (enemyBehaviorController.IsMoving() && !enemyBehaviorController.IsPaused()) {
@@ -143,5 +163,16 @@ public class EnemyAnimationController : MonoBehaviour
         }
 
         animation = newAnimation;
+    }
+
+    // Process enemy death.
+    public void TriggerDeath() {
+        animation = EnemyAnimation.Death;
+    }
+
+    // Process an attack being triggered.
+    public void TriggerFire() {
+        animation = EnemyAnimation.Fire;
+        fireTimeElapsed = GameManager.instance.GetEnemyFireDuration();
     }
 }

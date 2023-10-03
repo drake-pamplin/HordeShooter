@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class EnemyAttackController : MonoBehaviour
 {
+    private EnemyAnimationController enemyAnimationController;
+    
     // Start is called before the first frame update
     void Start()
     {
-        
+        enemyAnimationController = GetComponent<EnemyAnimationController>();
     }
 
     // Update is called once per frame
@@ -18,6 +20,9 @@ public class EnemyAttackController : MonoBehaviour
 
     // Trigger an attack on the player.
     public void AttackPlayer() {
+        // Trigger fire.
+        enemyAnimationController.TriggerFire();
+
         // Get player location.
         Vector3 playerPosition = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
         

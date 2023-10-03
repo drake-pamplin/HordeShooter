@@ -622,8 +622,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyBaseDefense: 3
-  enemyFireRate: 0.75
   enemyBaseHitPoints: 10
+  enemyDeathDuration: 1
+  enemyFadeDuration: 2
+  enemyFireRate: 0.75
+  enemyFireDuration: 0.39
   enemyMaxShots: 5
   enemyMoveSpeed: 2
   enemyPathfindingTick: 1
@@ -634,7 +637,10 @@ MonoBehaviour:
   enemySightDistance: 5
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
+  enemyTargetingOffset: 1
   playerAccuracyMaxDeviance: 10
+  playerBaseAttack: 5
+  playerBasePenetration: 1
   playerMaxAccuracyDecayFireTime: 3
   playerFireRate: 0.1
   playerMovmentSpeed: 5
@@ -1379,8 +1385,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1632444044}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -1.53}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.86}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2044521870}
@@ -1735,7 +1741,7 @@ CharacterController:
   m_Enabled: 1
   serializedVersion: 3
   m_Height: 2
-  m_Radius: 0.92
+  m_Radius: 0.5
   m_SlopeLimit: 0
   m_StepOffset: 0
   m_SkinWidth: 0.08
