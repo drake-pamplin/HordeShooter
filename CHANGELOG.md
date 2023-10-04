@@ -30,3 +30,5 @@ v0.3.0-ranged-enemy ============================================================
     - Movement
 - Added plasma projectile and ricochet.
 - Added pathfinding logic.
+
+v0.4.0-round-logic ================================================================================
