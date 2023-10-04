@@ -19,3 +19,14 @@ v0.2.0-base-player =============================================================
 - Added sprite sort order logic.
 
 v0.3.0-ranged-enemy ===============================================================================
+- Added enemy prefab.
+- Added enemy 3D model and renders for movement, fire, and death.
+- Added scripts for the following logic:
+    - Animation
+    - Attack
+    - Attribute
+    - Behavior
+    - Health
+    - Movement
+- Added plasma projectile and ricochet.
+- Added pathfinding logic.
