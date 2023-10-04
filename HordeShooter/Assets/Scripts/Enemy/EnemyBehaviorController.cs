@@ -235,5 +235,9 @@ public class EnemyBehaviorController : MonoBehaviour
         enemyBehaviorState = EnemyBehaviorState.Dead;
         enemyAnimationController.TriggerDeath();
         deathTimeElapsed = GameManager.instance.GetEnemyDeathDuration();
+
+        // Deactivate colliders.
+        GetComponent<CharacterController>().detectCollisions = false;
+        GetComponent<SphereCollider>().enabled = false;
     }
 }

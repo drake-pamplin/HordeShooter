@@ -161,6 +161,34 @@ public class PlayerAnimationController : MonoBehaviour
 
     // Create ricochet.
     public void CreateRicochet(RaycastHit hit) {
+        // Create metal ricochet.
+        if (hit.collider.gameObject.CompareTag(Constants.tagEnemy)) {
+            CreateRicochetMetal(hit);
+            return;
+        }
+        
+        // Create wall ricochet.
+        if (hit.collider.gameObject.CompareTag(Constants.tagWall) || hit.collider.gameObject.CompareTag(Constants.tagObject)) {
+            CreateRicochetWall(hit);
+            return;
+        }
+    }
+
+    // Create spark for bot ricochet.
+    private void CreateRicochetMetal(RaycastHit hit) {
+        // Create ricochet prefab at the hit point and set a random rotation.
+        GameObject ricochetObject = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectMetalRicochet),
+            hit.point,
+            Quaternion.Euler(new Vector3(0, Random.Range(0, 360), 0))
+        );
+
+        // Destroy the ricochet.
+        Destroy(ricochetObject, 1);
+    }
+
+    // Create puff of stone for wall ricochet.
+    private void CreateRicochetWall(RaycastHit hit) {
         // Get hit object.
         GameObject hitObject = hit.collider.gameObject;
 

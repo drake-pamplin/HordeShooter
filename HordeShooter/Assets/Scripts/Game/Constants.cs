@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Constants : MonoBehaviour
 {
+    public readonly static string animationMetalRicochet = "MetalRicochet";
     public readonly static string animationReload = "Reload";
     
     public readonly static string extensionTxt = ".txt";
@@ -18,6 +19,7 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectAmmoCounter = "AmmoCounter";
     public readonly static string gameObjectBackground = "Background";
     public readonly static string gameObjectFireReference = "FireReference";
+    public readonly static string gameObjectMetalRicochet = "MetalRicochet";
     public readonly static string gameObjectMuzzleFlare = "MuzzleFlare";
     public readonly static string gameObjectMuzzleFlarePoints = "MuzzleFlarePoints";
     public readonly static string gameObjectPillar = "Pillar";
