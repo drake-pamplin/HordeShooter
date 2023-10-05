@@ -22,6 +22,17 @@ public class InputManager : MonoBehaviour
         
     }
 
+    // Get console button down.
+    public bool GetConsoleButtonDown() {
+        bool input = false;
+
+        if (Keyboard.current.slashKey.wasPressedThisFrame) {
+            input = true;
+        }
+
+        return input;
+    }
+
     // Get raycast to mouse on environment layer.
     public Vector3 GetEnvironmentRaycastToMouse() {
         Vector3 mousePosition = Vector3.zero;

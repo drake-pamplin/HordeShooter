@@ -82,6 +82,11 @@ public class PrefabManager : MonoBehaviour
         prefabLibrary.Add(objectName, prefab);
 
         // Tile sprites
+        objectName = Constants.gameObjectBurrow;
+        filePath = Constants.fileTileSpritePath + objectName;
+        prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
+        
         objectName = Constants.spriteFloorBase_0;
         filePath = Constants.fileTileSpritePath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
@@ -121,6 +126,13 @@ public class PrefabManager : MonoBehaviour
         objectName = Constants.gameObjectPillar;
         filePath = Constants.fileObjectPath + objectName;
         prefab = Resources.Load<GameObject>(filePath);
+        prefabLibrary.Add(objectName, prefab);
+
+        // UI Sprites
+        filePath = Constants.fileUiPath;
+
+        objectName = Constants.gameObjectConsole;
+        prefab = Resources.Load<GameObject>(filePath + objectName);
         prefabLibrary.Add(objectName, prefab);
     }
 }

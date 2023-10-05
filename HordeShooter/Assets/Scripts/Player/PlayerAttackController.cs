@@ -32,6 +32,7 @@ public class PlayerAttackController : MonoBehaviour
         reloadPauseTime = 0;
         isReloadPaused = false;
     }
+    public bool IsFiring() { return InputManager.instance.GetLeftMouseDown(); }
     
     // Start is called before the first frame update
     void Start()
@@ -46,6 +47,11 @@ public class PlayerAttackController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Stop input if console is open.
+        if (GameManager.instance.IsGameConsoleState()) {
+            return;
+        }
+        
         ProcessFire();
         ProcessReload();
 

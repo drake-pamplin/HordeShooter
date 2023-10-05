@@ -9,6 +9,13 @@ public class GameManager : MonoBehaviour
     void Awake() {
         instance = this;
     }
+
+    private enum GameState {
+        Console,
+        Game
+    }
+    private GameState gameState = GameState.Game;
+    public bool IsGameConsoleState() { return gameState.Equals(GameState.Console); }
     
     [Header ("Enemy Variables")]
     public int enemyBaseDefense = 3;
@@ -84,6 +91,17 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        ProcessGameState();
+    }
+
+    // Process the game state.
+    private void ProcessGameState() {
+        GameState newGameState = GameState.Game;
+
+        if (ConsoleManager.instance.IsConsoleOpen()) {
+            newGameState = GameState.Console;
+        }
+
+        gameState = newGameState;
     }
 }
