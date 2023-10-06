@@ -32,6 +32,23 @@ public class PrefabManager : MonoBehaviour
         
     }
 
+    // Get a random enemy prefab.
+    public GameObject GetRandomEnemyPrefab() {
+        GameObject enemyPrefab = null;
+        
+        // Get random unit designation.
+        string enemyDesignation = Constants.commandUnits[Random.Range(0, Constants.commandUnits.Count)];
+
+        // Get prefab for designation.
+        if (enemyDesignation == Constants.commandUnits[0]) {
+            enemyPrefab = GetPrefab(Constants.gameObjectRanged);
+        } else {
+            enemyPrefab = GetPrefab(Constants.gameObjectRanged);
+        }
+        
+        return enemyPrefab;
+    }
+
     // Populate prefab library with gameObjects.
     private void PopulatePrefabLibrary() {
         string filePath = "";

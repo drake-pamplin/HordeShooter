@@ -741,4 +741,32 @@ public class MapManager : MonoBehaviour
             Quaternion.identity
         );
     }
+
+    // Spawn a random unit at a random location.
+    public void SpawnUnitAtRandom() {
+        // Get unit.
+        GameObject prefab = PrefabManager.instance.GetRandomEnemyPrefab();
+
+        // Get available tile.
+        GameObject tile = spawnableTiles[Random.Range(0, spawnableTiles.Count)];
+        
+        Debug.Log("Spawning " + unit.name + " unit at tile " + tile.GetComponent<Tile>().GetTileIndex());
+
+        // Create burrow at location and start borrow animation.
+        GameObject burrowObject = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectBurrow),
+            tile.transform.position,
+            Quaternion.identity
+        );
+
+        // Set burrow for destruction.
+        Destroy(burrowObject, 2);
+        
+        // Spawn enemy.
+        GameObject enemyObject = Instantiate(
+            unit,
+            tile.transform.position,
+            Quaternion.identity
+        );
+    }
 }

@@ -89,10 +89,14 @@ public class GameManager : MonoBehaviour
     public float GetPlayerRollSpeed() { return playerRollSpeed; }
 
     [Header ("World Variables")]
+    public int worldEnemyMaxEnemiesOnScreen = 25;
+    public int GetWorldEnemyMaxEnemiesOnScreen() { return worldEnemyMaxEnemiesOnScreen; }
     public LayerMask worldEntityMask;
     public LayerMask GetWorldEntityMask() { return worldEntityMask; }
     public float worldGravity = 9.8f;
     public float GetWorldGravity() { return worldGravity; }
+    public float worldRoundEnemySpawnTick = 0.5f;
+    public float GetWorldRoundEnemySpawnTick() { return worldRoundEnemySpawnTick; }
     public float worldRoundPostDuration = 3.0f;
     public float GetWorldRoundPostDuration() { return worldRoundPostDuration; }
     public float worldRoundPreDuration = 3.0f;
@@ -102,6 +106,7 @@ public class GameManager : MonoBehaviour
 
     private GameObject roundIndicator = null;
     private int roundEnemyCount = 0;
+    private int roundEnemySpawnTickElapsed = 0;
     private int roundNumber = 0;
     private float roundPostTimeElapsed = 0;
     private float roundPreTimeElapsed = 0;
@@ -119,6 +124,11 @@ public class GameManager : MonoBehaviour
     {
         ProcessGameState();
         ProcessRoundState();
+    }
+
+    // Calculate the number of enemies for the round.
+    private void CalculateRoundEnemyCount() {
+        
     }
 
     // Execute spawn command.
@@ -176,27 +186,45 @@ public class GameManager : MonoBehaviour
 
                 // Play round indicator initialize animation.
                 roundIndicator.GetComponent<Animator>().Play(Constants.animationInitialize);
+
+                // Calculate number of enemies to appear this round.
+                CalculateRoundEnemyCount();
             }
             roundPreTimeElapsed -= Time.deltaTime;
             roundTickOverTimeElapsed -= Time.deltaTime;
 
+            // Update round number in sync with animation.
             if (roundTickOverTimeElapsed <= 0) {
                 roundIndicator.transform.Find(Constants.gameObjectBackground).Find(Constants.gameObjectRoundText).GetComponent<Text>().text = roundNumber.ToString();
             }
             
             // Do nothing if timer is running down.
-            if (roundPreTimeElapsed > 0) {
-                return;
+            if (roundPreTimeElapsed <= 0) {
+                // When timer is up, default timer value and step the round state up.
+                roundPreTimeElapsed = 0;
+                roundState = RoundState.Mid;
             }
-
-            // When timer is up, default timer value and step the round state up.
-            roundPreTimeElapsed = 0;
-            roundState = RoundState.Mid;
-            return;
         }
 
         // Mid
         if (IsRoundMidState()) {
+            // Set enemy spawn timer.
+            if (roundEnemySpawnTickElapsed == 0 && roundEnemyCount > 0) {
+                roundEnemySpawnTickElapsed = GetWorldRoundEnemySpawnTick();
+            }
+            
+            // Elapse timer if there are still enemies to spawn.
+            if (roundEnemyCount > 0) {
+                roundEnemySpawnTickElapsed -= Time.deltaTime;
+            }
+
+            // Spawn an enemy on the map when timer elapses.
+            if (roundEnemySpawnTickElapsed <= 0) {
+                roundEnemySpawnTickElapsed = 0;
+                MapManager.instance.SpawnUnitAtRandom();
+                roundEnemyCount--;
+            }
+            
             // Check for enemies in play.
             GameObject[] enemies = GameObject.FindGameObjectsWithTag(Constants.tagEnemy);
 
