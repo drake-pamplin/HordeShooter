@@ -12,13 +12,15 @@ public class EnemyBehaviorController : MonoBehaviour
         Attack,
         Dead,
         Move,
-        Scatter
+        Scatter,
+        Spawning
     }
-    private EnemyBehaviorState enemyBehaviorState = EnemyBehaviorState.Move;
+    private EnemyBehaviorState enemyBehaviorState = EnemyBehaviorState.Spawning;
     public bool IsDead() { return enemyBehaviorState.Equals(EnemyBehaviorState.Dead); }
     public bool IsMoving() { return enemyBehaviorState.Equals(EnemyBehaviorState.Move); }
     public bool IsAttacking() { return enemyBehaviorState.Equals(EnemyBehaviorState.Attack); }
     public bool IsScattering() { return enemyBehaviorState.Equals(EnemyBehaviorState.Scatter); }
+    public bool IsSpawning() { return enemyBehaviorState.Equals(EnemyBehaviorState.Spawning); }
 
     private enum ScatterState {
         Move,
@@ -35,6 +37,8 @@ public class EnemyBehaviorController : MonoBehaviour
 
     private float deathTimeElapsed = 0;
     private float deathFadeTimeElapsed = 0;
+
+    private float spawnTimeElapsed = 0;
     
     // Start is called before the first frame update
     void Start()
@@ -43,37 +47,21 @@ public class EnemyBehaviorController : MonoBehaviour
         enemyAttackController = GetComponent<EnemyAttackController>();
         enemyMovementController = GetComponent<EnemyMovementController>();
 
-        pauseDuration = GameManager.instance.GetEnemyPauseDuration();
+        // pauseDuration = GameManager.instance.GetEnemyPauseDuration();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (enemyBehaviorState.Equals(EnemyBehaviorState.Dead)) {
-            // Give buffer for death animation to play.
-            if (deathTimeElapsed > 0) {
-                deathTimeElapsed -= Time.deltaTime;
-                return;
-            }
-            // Trigger fade timer after death animation has played.
-            if (deathTimeElapsed <= 0 && deathFadeTimeElapsed == 0) {
-                deathFadeTimeElapsed = GameManager.instance.GetEnemyFadeDuration();
-            }
+        // Handle death logic.
+        if (IsDead()) {
+            HandleDeath();
+            return;
+        }
 
-            // Give buffer for fade to occur.
-            if (deathFadeTimeElapsed > 0) {
-                deathFadeTimeElapsed -= Time.deltaTime;
-
-                // Update fade amount.
-                Color spriteColor = transform.Find(Constants.gameObjectSprite).GetComponent<SpriteRenderer>().color;
-                spriteColor.a = (deathFadeTimeElapsed / GameManager.instance.GetEnemyFadeDuration());
-                transform.Find(Constants.gameObjectSprite).GetComponent<SpriteRenderer>().color = spriteColor;
-            }
-            // Destroy gameObject when fade is complete.
-            if (deathFadeTimeElapsed <= 0) {
-                DestroyEnemy();
-            }
-
+        // Handle spawning logic.
+        if (IsSpawning()) {
+            HandleSpawning();
             return;
         }
         
@@ -147,6 +135,33 @@ public class EnemyBehaviorController : MonoBehaviour
         }
     }
 
+    // Handle death logic.
+    private void HandleDeath() {
+        // Give buffer for death animation to play.
+        if (deathTimeElapsed > 0) {
+            deathTimeElapsed -= Time.deltaTime;
+            return;
+        }
+        // Trigger fade timer after death animation has played.
+        if (deathTimeElapsed <= 0 && deathFadeTimeElapsed == 0) {
+            deathFadeTimeElapsed = GameManager.instance.GetEnemyFadeDuration();
+        }
+
+        // Give buffer for fade to occur.
+        if (deathFadeTimeElapsed > 0) {
+            deathFadeTimeElapsed -= Time.deltaTime;
+
+            // Update fade amount.
+            Color spriteColor = transform.Find(Constants.gameObjectSprite).GetComponent<SpriteRenderer>().color;
+            spriteColor.a = (deathFadeTimeElapsed / GameManager.instance.GetEnemyFadeDuration());
+            transform.Find(Constants.gameObjectSprite).GetComponent<SpriteRenderer>().color = spriteColor;
+        }
+        // Destroy gameObject when fade is complete.
+        if (deathFadeTimeElapsed <= 0) {
+            DestroyEnemy();
+        }
+    }
+
     // Handle move logic.
     private void HandleMove() {
         // Check for a sight line to the player.
@@ -209,6 +224,25 @@ public class EnemyBehaviorController : MonoBehaviour
         }
     }
 
+    // Handle spawning logic.
+    private void HandleSpawning() {
+        // Set spawn timer if not set.
+        if (spawnTimeElapsed == 0) {
+            spawnTimeElapsed = GameManager.instance.GetEnemySpawnTime();
+        }
+        spawnTimeElapsed -= Time.deltaTime;
+
+        if (spawnTimeElapsed >= 0) {
+            return;
+        }
+
+        Debug.Log("Done spawning.");
+
+        // Start pause when spawn timer expires.
+        enemyBehaviorState = EnemyBehaviorState.Move;
+        pauseDuration = GameManager.instance.GetEnemyPauseDuration();
+    }
+
     // Check if the player is visible.
     private bool IsPlayerVisible() {
         bool playerInSight = false;
@@ -237,7 +271,10 @@ public class EnemyBehaviorController : MonoBehaviour
         deathTimeElapsed = GameManager.instance.GetEnemyDeathDuration();
 
         // Deactivate colliders.
-        GetComponent<CharacterController>().detectCollisions = false;
+        GetComponent<CharacterController>().enabled = false;
         GetComponent<SphereCollider>().enabled = false;
+
+        // Set sprite to bottom layer.
+        transform.Find(Constants.gameObjectSprite).GetComponent<SpriteRenderer>().sortingOrder = -1;
     }
 }

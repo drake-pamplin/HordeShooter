@@ -25,6 +25,10 @@ public class EnemyMovementController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (enemyBehaviorController.IsDead()) {
+            return;
+        }
+        
         ProcessPathfinding();
     }
 

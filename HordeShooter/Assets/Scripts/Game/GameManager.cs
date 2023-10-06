@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,6 +17,16 @@ public class GameManager : MonoBehaviour
     }
     private GameState gameState = GameState.Game;
     public bool IsGameConsoleState() { return gameState.Equals(GameState.Console); }
+
+    private enum RoundState {
+        Mid,
+        Post,
+        Pre
+    }
+    private RoundState roundState = RoundState.Post;
+    private bool IsRoundMidState() { return roundState.Equals(RoundState.Mid); }
+    private bool IsRoundPostState() { return roundState.Equals(RoundState.Post); }
+    private bool IsRoundPreState() { return roundState.Equals(RoundState.Pre); }
     
     [Header ("Enemy Variables")]
     public int enemyBaseDefense = 3;
@@ -46,6 +57,8 @@ public class GameManager : MonoBehaviour
     public float GetEnemyScatterSpeed() { return enemyScatterSpeed; }
     public float enemySightDistance = 5.0f;
     public float GetEnemySightDistance() { return enemySightDistance; }
+    public float enemySpawnTime = 1.050f;
+    public float GetEnemySpawnTime() { return enemySpawnTime; }
     public float enemySphereCastHeight = 0.5f;
     public float GetEnemySphereCastHeight() { return enemySphereCastHeight; }
     public float enemySphereCastRadius = 0.3f;
@@ -80,6 +93,19 @@ public class GameManager : MonoBehaviour
     public LayerMask GetWorldEntityMask() { return worldEntityMask; }
     public float worldGravity = 9.8f;
     public float GetWorldGravity() { return worldGravity; }
+    public float worldRoundPostDuration = 3.0f;
+    public float GetWorldRoundPostDuration() { return worldRoundPostDuration; }
+    public float worldRoundPreDuration = 3.0f;
+    public float GetWorldRoundPreDuration() { return worldRoundPreDuration; }
+    public float worldRoundTickOverTimer = 2.31f;
+    public float GetWorldRoundTickOverTimer() { return worldRoundTickOverTimer; }
+
+    private GameObject roundIndicator = null;
+    private int roundEnemyCount = 0;
+    private int roundNumber = 0;
+    private float roundPostTimeElapsed = 0;
+    private float roundPreTimeElapsed = 0;
+    private float roundTickOverTimeElapsed = 0;
     
     // Start is called before the first frame update
     void Start()
@@ -92,6 +118,32 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         ProcessGameState();
+        ProcessRoundState();
+    }
+
+    // Execute spawn command.
+    public void ExecuteSpawnCommand(string unit) {
+        // Get unit designation and get unit prefab.
+        GameObject prefab = null;
+        if (unit.Equals(Constants.gameObjectRanged.ToLower())) {
+            prefab = PrefabManager.instance.GetPrefab(Constants.gameObjectRanged);
+        }
+
+        if (prefab == null) {
+            Debug.LogError("No unit prefab found.");
+            return;
+        }
+
+        // Raycast to mouse location.
+        GameObject spawnTile = InputManager.instance.GetTileRaycastToMouse();
+        
+        if (spawnTile == null) {
+            Debug.LogError("Mouse not on a valid tile.");
+            return;
+        }
+
+        // Call map manager to spawn a unit.
+        MapManager.instance.SpawnUnitAtLocation(prefab, spawnTile);
     }
 
     // Process the game state.
@@ -103,5 +155,80 @@ public class GameManager : MonoBehaviour
         }
 
         gameState = newGameState;
+    }
+
+    // Process round state.
+    private void ProcessRoundState() {
+        // Set the round indicator if it is not set.
+        if (roundIndicator == null) {
+            roundIndicator = GameObject.FindGameObjectWithTag(Constants.tagRoundIndicator);
+        }
+        
+        // Pre
+        if (IsRoundPreState()) {
+            // Perform phase logic.
+            if (roundPreTimeElapsed == 0) {
+                // Set phase timer.
+                roundPreTimeElapsed = GetWorldRoundPreDuration();
+                
+                // Set round tick over timer.
+                roundTickOverTimeElapsed = GetWorldRoundTickOverTimer();
+
+                // Play round indicator initialize animation.
+                roundIndicator.GetComponent<Animator>().Play(Constants.animationInitialize);
+            }
+            roundPreTimeElapsed -= Time.deltaTime;
+            roundTickOverTimeElapsed -= Time.deltaTime;
+
+            if (roundTickOverTimeElapsed <= 0) {
+                roundIndicator.transform.Find(Constants.gameObjectBackground).Find(Constants.gameObjectRoundText).GetComponent<Text>().text = roundNumber.ToString();
+            }
+            
+            // Do nothing if timer is running down.
+            if (roundPreTimeElapsed > 0) {
+                return;
+            }
+
+            // When timer is up, default timer value and step the round state up.
+            roundPreTimeElapsed = 0;
+            roundState = RoundState.Mid;
+            return;
+        }
+
+        // Mid
+        if (IsRoundMidState()) {
+            // Check for enemies in play.
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag(Constants.tagEnemy);
+
+            // If no enemies exist or are queued up, end the mid state.
+            if (enemies.Length == 0 && roundEnemyCount == 0) {
+                roundState = RoundState.Post;
+            }
+            return;
+        }
+
+        // Post
+        if (IsRoundPostState()) {
+            // Peform phase logic.
+            if (roundPostTimeElapsed == 0) {
+                // Set phase timer.
+                roundPostTimeElapsed = GetWorldRoundPostDuration();
+
+                // Play round indicator end animation.
+                roundIndicator.GetComponent<Animator>().Play(Constants.animationEnd);
+            }
+            roundPostTimeElapsed -= Time.deltaTime;
+
+            // Do nothing if the timer is running down.
+            if (roundPostTimeElapsed > 0) {
+                return;
+            }
+
+            // When timer is up, default timer value and restart the round state to pre.
+            roundPostTimeElapsed = 0;
+            roundState = RoundState.Pre;
+            roundNumber++;
+            return;
+        }
     }
 }

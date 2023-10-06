@@ -11,6 +11,7 @@ public class EnemyAnimationController : MonoBehaviour
         Idle,
         Fire,
         Run,
+        Spawn,
         Walk
     }
     private EnemyAnimation animation = EnemyAnimation.Idle;
@@ -60,7 +61,7 @@ public class EnemyAnimationController : MonoBehaviour
         animationName += animation.ToString();
 
         // Get the direction.
-        if (!animation.Equals(EnemyAnimation.Death)) {
+        if (!animation.Equals(EnemyAnimation.Death) && !animation.Equals(EnemyAnimation.Spawn)) {
             animationName += Constants.splitCharUnderscore + direction.ToString();
         }
 
@@ -156,7 +157,9 @@ public class EnemyAnimationController : MonoBehaviour
         
         EnemyAnimation newAnimation = EnemyAnimation.Idle;
 
-        if (enemyBehaviorController.IsMoving() && !enemyBehaviorController.IsPaused()) {
+        if (enemyBehaviorController.IsSpawning()) {
+            newAnimation = EnemyAnimation.Spawn;
+        } else if (enemyBehaviorController.IsMoving() && !enemyBehaviorController.IsPaused()) {
             newAnimation = EnemyAnimation.Walk;
         } else if (enemyBehaviorController.IsScattering() && !enemyBehaviorController.IsPaused()) {
             newAnimation = EnemyAnimation.Run;

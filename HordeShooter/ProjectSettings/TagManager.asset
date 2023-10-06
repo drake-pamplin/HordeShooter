@@ -9,6 +9,7 @@ TagManager:
   - Enemy
   - Tile
   - Canvas
+  - RoundIndicator
   layers:
   - Default
   - TransparentFX

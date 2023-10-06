@@ -32,7 +32,7 @@ public class PlayerAttackController : MonoBehaviour
         reloadPauseTime = 0;
         isReloadPaused = false;
     }
-    public bool IsFiring() { return InputManager.instance.GetLeftMouseDown(); }
+    public bool IsFiring() { return InputManager.instance.GetFireButtonPressed(); }
     
     // Start is called before the first frame update
     void Start()
@@ -157,7 +157,7 @@ public class PlayerAttackController : MonoBehaviour
 
     // Process fire input
     private void ProcessFire() {
-        isFiring = InputManager.instance.GetLeftMouseDown();
+        isFiring = InputManager.instance.GetFireButtonPressed();
         if (!isFiring) {
             if (fireCooldownStartTime != 0) {
                 fireCooldownStartTime = 0;

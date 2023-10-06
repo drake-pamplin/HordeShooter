@@ -19,6 +19,7 @@ public class MapManager : MonoBehaviour
     private int mapHeight;
     private int mapWidth;
     private Dictionary<int, GameObject> mapTiles = new Dictionary<int, GameObject>();
+    private List<GameObject> spawnableTiles = new List<GameObject>();
     
     // Start is called before the first frame update
     void Start()
@@ -50,15 +51,6 @@ public class MapManager : MonoBehaviour
             CreateTerrainTile(mapIndex);
             CreateObjectTile(mapIndex);
         }
-
-        // int checkTile = 732;
-        // string tileOutput = "Tile " + checkTile + ":";
-        // foreach (KeyValuePair<Tile.TileDirection, GameObject> entry in mapTiles[checkTile].GetComponent<Tile>().GetNeighborTiles()) {
-        //     tileOutput += "\n\n";
-        //     tileOutput += entry.Key.ToString() + " tile: " + entry.Value.name;
-        //     tileOutput += "\n" + entry.Value.GetComponent<Tile>().IsTraversable();
-        // }
-        // Debug.Log(tileOutput);
     }
 
     // Create object tile.
@@ -91,6 +83,7 @@ public class MapManager : MonoBehaviour
         // Set the tile to be traversable if it is a floor tile.
         if (mapTerrainString[mapIndex].Equals(Constants.tileFloor)) {
             tileScript.SetTraversable(true);
+            spawnableTiles.Add(mapTile);
         }
         tileScript.SetTileIndex(mapIndex);
 
@@ -725,5 +718,27 @@ public class MapManager : MonoBehaviour
             // Set the current tile's left neighbor.
             mapTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Left, leftTile);
         }
+    }
+
+    // Spawn a given unit at the given location.
+    public void SpawnUnitAtLocation(GameObject unit, GameObject tile) {
+        Debug.Log("Spawning " + unit.name + " unit at tile " + tile.GetComponent<Tile>().GetTileIndex());
+
+        // Create burrow at location and start borrow animation.
+        GameObject burrowObject = Instantiate(
+            PrefabManager.instance.GetPrefab(Constants.gameObjectBurrow),
+            tile.transform.position,
+            Quaternion.identity
+        );
+
+        // Set burrow for destruction.
+        Destroy(burrowObject, 2);
+        
+        // Spawn enemy.
+        GameObject enemyObject = Instantiate(
+            unit,
+            tile.transform.position,
+            Quaternion.identity
+        );
     }
 }

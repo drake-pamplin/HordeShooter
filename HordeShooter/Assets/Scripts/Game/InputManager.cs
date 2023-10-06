@@ -23,10 +23,43 @@ public class InputManager : MonoBehaviour
     }
 
     // Get console button down.
-    public bool GetConsoleButtonDown() {
+    public bool GetConsoleButtonPressed() {
         bool input = false;
 
         if (Keyboard.current.slashKey.wasPressedThisFrame) {
+            input = true;
+        }
+
+        return input;
+    }
+
+    // Get console command next button down.
+    public bool GetConsoleCommandNextButtonPressed() {
+        bool input = false;
+
+        if (Keyboard.current.downArrowKey.wasPressedThisFrame) {
+            input = true;
+        }
+
+        return input;
+    }
+
+    // Get console command previous button down.
+    public bool GetConsoleCommandPreviousPressed() {
+        bool input = false;
+
+        if (Keyboard.current.upArrowKey.wasPressedThisFrame) {
+            input = true;
+        }
+
+        return input;
+    }
+
+    // Get console confirm button down.
+    public bool GetConsoleConfirmButtonPressed() {
+        bool input = false;
+
+        if (Keyboard.current.enterKey.wasPressedThisFrame) {
             input = true;
         }
 
@@ -46,6 +79,32 @@ public class InputManager : MonoBehaviour
         return mousePosition;
     }
 
+    // Get raycast to mouse on environment layer.
+    public GameObject GetTileRaycastToMouse() {
+        GameObject tile = null;
+        
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100)) {
+            if (hit.collider.gameObject.CompareTag(Constants.tagTile)) {
+                tile = hit.collider.gameObject;
+            }
+        }
+        
+        return tile;
+    }
+
+    // Get left mouse button down.
+    public bool GetFireButtonPressed() {
+        bool pressed = false;
+
+        if (Mouse.current.leftButton.isPressed) {
+            pressed = true;
+        }
+
+        return pressed;
+    }
+
     // Get horizontal input.
     public int GetHorizontalInput() {
         int input = 0;
@@ -58,17 +117,6 @@ public class InputManager : MonoBehaviour
         }
 
         return input;
-    }
-
-    // Get left mouse button down.
-    public bool GetLeftMouseDown() {
-        bool pressed = false;
-
-        if (Mouse.current.leftButton.isPressed) {
-            pressed = true;
-        }
-
-        return pressed;
     }
 
     // Get reload input.

@@ -38,6 +38,13 @@ public class PrefabManager : MonoBehaviour
         string objectName = "";
         GameObject prefab;
 
+        // Enemy prefabs
+        filePath = Constants.fileEnemiesPath;
+
+        objectName = Constants.gameObjectRanged;
+        prefab = Resources.Load<GameObject>(filePath + objectName);
+        prefabLibrary.Add(objectName, prefab);
+        
         // Map sprites
         objectName = Constants.gameObjectTileBase;
         filePath = Constants.fileTilePrefabPath + objectName;

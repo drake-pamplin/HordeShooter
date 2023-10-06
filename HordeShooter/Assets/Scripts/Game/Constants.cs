@@ -4,11 +4,19 @@ using UnityEngine;
 
 public class Constants : MonoBehaviour
 {
+    public readonly static string animationEnd = "End";
+    public readonly static string animationInitialize = "Initialize";
     public readonly static string animationMetalRicochet = "MetalRicochet";
     public readonly static string animationReload = "Reload";
+
+    public readonly static List<string> commandUnits = new List<string> {
+        "ranged"
+    };
+    public readonly static string commandSpawn = "spawn";
     
     public readonly static string extensionTxt = ".txt";
     
+    public readonly static string fileEnemiesPath = "Prefabs/Entities/Enemies/";
     public readonly static string fileMapDirPath = "Assets/Resources/Maps/";
     public readonly static string fileMunitionsPath = "Prefabs/Munitions/";
     public readonly static string fileObjectPath = "Prefabs/Tile/Objects/";
@@ -29,9 +37,11 @@ public class Constants : MonoBehaviour
     public readonly static string gameObjectPillar = "Pillar";
     public readonly static string gameObjectPlasmaRicochet = "PlasmaRicochetObject";
     public readonly static string gameObjectProjectile = "Projectile";
+    public readonly static string gameObjectRanged = "Ranged";
     public readonly static string gameObjectReloadIndicator = "ReloadIndicator";
     public readonly static string gameObjectRicochetObject = "RicochetObject";
     public readonly static string gameObjectRotationReference = "RotationReference";
+    public readonly static string gameObjectRoundText = "RoundText";
     public readonly static string gameObjectSprite = "Sprite";
     public readonly static string gameObjectText = "Text";
     public readonly static string gameObjectTileBase = "TileObject";
@@ -41,6 +51,7 @@ public class Constants : MonoBehaviour
     public readonly static string mapLayerObjects = "Objects";
     public readonly static string mapLayerTerrain = "Terrain";
 
+    public readonly static char splitCharSpace = ' ';
     public readonly static char splitCharUnderscore = '_';
 
     public readonly static string spriteFloorBase_0 = "FloorBase_0";
@@ -56,6 +67,7 @@ public class Constants : MonoBehaviour
     public readonly static string tagObject = "Object";
     public readonly static string tagPlayer = "Player";
     public readonly static string tagTile = "Tile";
+    public readonly static string tagRoundIndicator = "RoundIndicator";
     public readonly static string tagWall = "Wall";
 
     public readonly static char tileFill = '.';
