@@ -5,6 +5,60 @@ using UnityEngine;
 
 public class MapManager : MonoBehaviour
 {
+    private struct Room {
+        public Room(int id, Vector2 coordinates, int width, int height) : this() {
+            this.id = id;
+            this.coordinates = coordinates;
+            this.width = width;
+            this.height = height;
+
+            GenerateRoomTiles();
+        }
+        
+        private int id;
+        public int GetId() { return id; }
+        
+        // X, Y
+        private Vector2 coordinates;
+        public Vector2 GetCoordinates() { return coordinates; }
+
+        private int width;
+        public int GetWidth() { return width; }
+
+        private int height;
+        public int GetHeight() { return height; }
+
+        private List<GameObject> tiles;
+        public GameObject GetTileAtIndex(int index) {
+            GameObject tile = null;
+            if (index < tiles.Count) {
+                tile = tiles[index];
+            }
+            return tile;
+        }
+
+        public bool IsOverlapping(Room otherRoom) {
+            return false;
+        }
+
+        private void GenerateRoomTiles() {
+            tiles = new List<GameObject>();
+            int maxTiles = width * height;
+            Debug.Log(maxTiles);
+            for (int tileIndex = 0; tileIndex < maxTiles; tileIndex++) {
+                int xCoord = ((int)coordinates.x - (width / 2)) + (tileIndex % width);
+                int yCoord = ((int)coordinates.y + (height / 2)) - (tileIndex / width);
+                GameObject tile = Instantiate(
+                    PrefabManager.instance.GetPrefab(Constants.spriteFloorBase_0),
+                    new Vector3(xCoord, 0, yCoord),
+                    Quaternion.identity
+                );
+                tile.name = "Room_" + id + "_Tile_" + tileIndex;
+                tiles.Add(tile);
+            }
+        }
+    }
+    
     public static MapManager instance = null;
     
     void Awake() {
@@ -24,7 +78,7 @@ public class MapManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        GenerateRandomMap();
     }
 
     // Update is called once per frame
@@ -136,8 +190,40 @@ public class MapManager : MonoBehaviour
 
         mapTiles.Add(mapIndex, mapTile);
     }
-    
 
+    // Generate a random map.
+    private void GenerateRandomMap() {
+        // Generate randomly sized rooms within radius of origin.
+        GenerateRandomRooms();
+
+        // Select rooms above a certain size.
+
+        // Separate rooms.
+
+        // Triangulate rooms.
+
+        // Connect rooms using minimal spanning tree.
+
+        // Generate paths between rooms using tree.
+    }
+
+    // Generate random rooms around origin.
+    private void GenerateRandomRooms() {
+        Dictionary<int, Room> rooms = new Dictionary<int, Room>();
+        
+        // Generate a random number of rooms within range of origin.
+        for (int roomIndex = 0; roomIndex < GameManager.instance.GetMapMaxNumberOfRooms(); roomIndex++) {
+            Vector2 coordinates = new Vector2(
+                Mathf.RoundToInt(UnityEngine.Random.Range(GameManager.instance.GetMapMaxDevianceFromOrigin() * -1, GameManager.instance.GetMapMaxDevianceFromOrigin())),
+                Mathf.RoundToInt(UnityEngine.Random.Range(GameManager.instance.GetMapMaxDevianceFromOrigin() * -1, GameManager.instance.GetMapMaxDevianceFromOrigin()))
+            );
+            int width = UnityEngine.Random.Range(GameManager.instance.GetMapMinRoomWidth(), GameManager.instance.GetMapMaxRoomWidth());
+            int height = UnityEngine.Random.Range(GameManager.instance.GetMapMinRoomHeight(), GameManager.instance.GetMapMaxRoomHeight());
+            Room room = new Room(roomIndex, coordinates, width, height);
+            rooms.Add(roomIndex, room);
+        }
+    }
+    
     // Get the sprite for the tile location.
     private string GetBaseSpriteName(int mapIndex) {
         // Check for fill.

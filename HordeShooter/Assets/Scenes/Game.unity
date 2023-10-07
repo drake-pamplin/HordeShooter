@@ -667,6 +667,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 158ca049adf5a6e40a133dd973844a5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isGameActive: 0
   enemyBaseDefense: 3
   enemyBaseHitPoints: 10
   enemyDeathDuration: 1
@@ -685,6 +686,10 @@ MonoBehaviour:
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
   enemyTargetingOffset: 1
+  mapMaxDevianceFromOrigin: 10
+  mapMaxNumberOfRooms: 1
+  mapMaxRoomHeight: 30
+  mapMaxRoomWidth: 30
   playerAccuracyMaxDeviance: 10
   playerBaseAttack: 5
   playerBasePenetration: 1
@@ -695,10 +700,14 @@ MonoBehaviour:
   playerReloadTime: 2
   playerRollTime: 0.5
   playerRollSpeed: 9
+  worldEnemyMaxEnemiesOnScreen: 25
   worldEntityMask:
     serializedVersion: 2
     m_Bits: 8
   worldGravity: 9.8
+  worldRoundEnemyBasePopulation: 5
+  worldRoundEnemyIncreaseMaxAmount: 3
+  worldRoundEnemySpawnTick: 0.5
   worldRoundPostDuration: 3
   worldRoundPreDuration: 4.5
   worldRoundTickOverTimer: 2.583
@@ -988,7 +997,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1217048361
 Transform:
   m_ObjectHideFlags: 0

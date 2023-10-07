@@ -27,6 +27,8 @@ public class GameManager : MonoBehaviour
     private bool IsRoundMidState() { return roundState.Equals(RoundState.Mid); }
     private bool IsRoundPostState() { return roundState.Equals(RoundState.Post); }
     private bool IsRoundPreState() { return roundState.Equals(RoundState.Pre); }
+
+    public bool isGameActive = true;
     
     [Header ("Enemy Variables")]
     public int enemyBaseDefense = 3;
@@ -65,6 +67,20 @@ public class GameManager : MonoBehaviour
     public float GetEnemySphereCastRadius() { return enemySphereCastRadius; }
     public float enemyTargetingOffset = 1.0f;
     public float GetEnemyTargetingOffset() { return enemyTargetingOffset; }
+
+    [Header ("Map Generation Variables")]
+    public float mapMaxDevianceFromOrigin = 10f;
+    public float GetMapMaxDevianceFromOrigin() { return mapMaxDevianceFromOrigin; }
+    public int mapMaxNumberOfRooms = 100;
+    public int GetMapMaxNumberOfRooms() { return mapMaxNumberOfRooms; }
+    public int mapMinRoomHeight = 5;
+    public int GetMapMinRoomHeight() { return mapMinRoomHeight; }
+    public int mapMaxRoomHeight = 30;
+    public int GetMapMaxRoomHeight() { return mapMaxRoomHeight; }
+    public int mapMinRoomWidth = 5;
+    public int GetMapMinRoomWidth() { return mapMinRoomWidth; }
+    public int mapMaxRoomWidth = 30;
+    public int GetMapMaxRoomWidth() { return mapMaxRoomWidth; }
     
     [Header ("Player Variables")]
     public float playerAccuracyMaxDeviance = 50.0f;
@@ -119,13 +135,19 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        MapManager.instance.LoadMap(Constants.mapBase);
-        MapManager.instance.BuildMap();
+        if (isGameActive) {
+            MapManager.instance.LoadMap(Constants.mapBase);
+            MapManager.instance.BuildMap();
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!isGameActive) {
+            return;
+        }
+        
         ProcessGameState();
         ProcessRoundState();
     }
@@ -137,6 +159,18 @@ public class GameManager : MonoBehaviour
         for (int roundIndex = 1; roundIndex < roundNumber; roundIndex++) {
             roundEnemyCount += Random.Range(1, GetWorldRoundEnemyIncreaseMaxAmount() + 1);
         }
+    }
+
+    // Check if player exists.
+    public bool DoesPlayerExist() {
+        bool playerExists = false;
+        
+        GameObject[] players = GameObject.FindGameObjectsWithTag(Constants.tagPlayer);
+        if (players.Length != 0) {
+            playerExists = true;
+        }
+
+        return playerExists;
     }
 
     // Execute spawn command.

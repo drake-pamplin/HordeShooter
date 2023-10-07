@@ -11,14 +11,18 @@ public class AmmoCounter : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        playerAttackController = GameObject.FindGameObjectWithTag(Constants.tagPlayer).GetComponent<PlayerAttackController>();
-        
+        if (GameManager.instance.DoesPlayerExist()) {
+            playerAttackController = GameObject.FindGameObjectWithTag(Constants.tagPlayer).GetComponent<PlayerAttackController>();
+        }
+
         ammoText = transform.Find(Constants.gameObjectText).GetComponent<Text>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        ammoText.text = playerAttackController.GetAmmoInClip() + " / " + GameManager.instance.GetPlayerClipSize();
+        if (GameManager.instance.DoesPlayerExist()) {
+            ammoText.text = playerAttackController.GetAmmoInClip() + " / " + GameManager.instance.GetPlayerClipSize();
+        }
     }
 }

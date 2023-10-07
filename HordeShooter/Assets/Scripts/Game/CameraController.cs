@@ -18,6 +18,8 @@ public class CameraController : MonoBehaviour
 
     // Track the target player.
     private void TrackPlayer() {
-        transform.position = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
+        if (GameManager.instance.DoesPlayerExist()) {
+            transform.position = GameObject.FindGameObjectWithTag(Constants.tagPlayer).transform.position;
+        }
     }
 }
