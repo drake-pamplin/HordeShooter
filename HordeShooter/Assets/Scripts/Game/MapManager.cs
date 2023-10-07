@@ -28,6 +28,8 @@ public class MapManager : MonoBehaviour
         private int height;
         public int GetHeight() { return height; }
 
+        private GameObject roomObject;
+        
         private List<GameObject> tiles;
         public GameObject GetTileAtIndex(int index) {
             GameObject tile = null;
@@ -36,12 +38,33 @@ public class MapManager : MonoBehaviour
             }
             return tile;
         }
+        public GameObject GetFirstTile() { return tiles[0]; }
+        public GameObject GetLastTile() { return tiles[tiles.Count - 1]; }
 
         public bool IsOverlapping(Room otherRoom) {
-            return false;
+            // Get top left point and bottom right point for each rectangle.
+            Vector2 roomTopLeft = new Vector2(GetFirstTile().transform.position.x, GetFirstTile().transform.position.z);
+            Vector2 roomBottomRight = new Vector2(GetLastTile().transform.position.x, GetLastTile().transform.position.z);
+            Vector2 otherRoomTopLeft = new Vector2(otherRoom.GetFirstTile().transform.position.x, otherRoom.GetFirstTile().transform.position.z);
+            Vector2 otherRoomBottomRight = new Vector2(otherRoom.GetLastTile().transform.position.x, otherRoom.GetLastTile().transform.position.z);
+
+            // Check if one rectangle is on the left side of the other.
+            if (roomTopLeft.x > otherRoomBottomRight.x || otherRoomTopLeft.x > roomBottomRight.x) {
+                return false;
+            }
+
+            // Check if one rectangle is on above the other.
+            if (roomBottomRight.y > otherRoomTopLeft.y || otherRoomBottomRight.y > roomTopLeft.y) {
+                return false;
+            }
+            
+            // If no above conditions are met, the two are overlapping.
+            return true;
         }
 
         private void GenerateRoomTiles() {
+            roomObject = new GameObject("Room_" + id);
+            roomObject.transform.position = new Vector3(coordinates.x, 0, coordinates.y);
             tiles = new List<GameObject>();
             int maxTiles = width * height;
             Debug.Log(maxTiles);
@@ -50,10 +73,10 @@ public class MapManager : MonoBehaviour
                 int yCoord = ((int)coordinates.y + (height / 2)) - (tileIndex / width);
                 GameObject tile = Instantiate(
                     PrefabManager.instance.GetPrefab(Constants.spriteFloorBase_0),
-                    new Vector3(xCoord, 0, yCoord),
-                    Quaternion.identity
+                    roomObject.transform
                 );
-                tile.name = "Room_" + id + "_Tile_" + tileIndex;
+                tile.transform.localPosition = new Vector3(xCoord, 0, yCoord);
+                tile.name = "Tile_" + tileIndex;
                 tiles.Add(tile);
             }
         }
@@ -199,6 +222,13 @@ public class MapManager : MonoBehaviour
         // Select rooms above a certain size.
 
         // Separate rooms.
+        /*
+            Separate rooms using the following logic:
+                - direction = (otherRoomPos - roomPos).normalized
+                - room.Move(-direction, tileSizeUnit)
+                - otherRoom.Move(direction, tileSizeUnit)
+            Repeat while any rooms overlap.
+        */
 
         // Triangulate rooms.
 
