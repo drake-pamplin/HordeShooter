@@ -189,6 +189,10 @@ public class MapManager : MonoBehaviour
             entry.Value.GetComponent<Tile>().ResetPathStep();
         }
 
+        if (originTile == null || destinationTile == null) {
+            return new List<Vector3> { originTile.transform.position };
+        }
+        
         if (originTile.GetComponent<Tile>().GetTileIndex() == destinationTile.GetComponent<Tile>().GetTileIndex()) {
             return new List<Vector3> { originTile.transform.position };
         }
@@ -745,10 +749,10 @@ public class MapManager : MonoBehaviour
     // Spawn a random unit at a random location.
     public void SpawnUnitAtRandom() {
         // Get unit.
-        GameObject prefab = PrefabManager.instance.GetRandomEnemyPrefab();
+        GameObject unit = PrefabManager.instance.GetRandomEnemyPrefab();
 
         // Get available tile.
-        GameObject tile = spawnableTiles[Random.Range(0, spawnableTiles.Count)];
+        GameObject tile = spawnableTiles[UnityEngine.Random.Range(0, spawnableTiles.Count)];
         
         Debug.Log("Spawning " + unit.name + " unit at tile " + tile.GetComponent<Tile>().GetTileIndex());
 

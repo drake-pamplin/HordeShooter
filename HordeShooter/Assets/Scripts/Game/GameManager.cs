@@ -95,6 +95,10 @@ public class GameManager : MonoBehaviour
     public LayerMask GetWorldEntityMask() { return worldEntityMask; }
     public float worldGravity = 9.8f;
     public float GetWorldGravity() { return worldGravity; }
+    public int worldRoundEnemyBasePopulation = 5;
+    public int GetWorldRoundEnemyBasePopulation() { return worldRoundEnemyBasePopulation; }
+    public int worldRoundEnemyIncreaseMaxAmount = 3;
+    public int GetWorldRoundEnemyIncreaseMaxAmount() { return worldRoundEnemyIncreaseMaxAmount; }
     public float worldRoundEnemySpawnTick = 0.5f;
     public float GetWorldRoundEnemySpawnTick() { return worldRoundEnemySpawnTick; }
     public float worldRoundPostDuration = 3.0f;
@@ -106,7 +110,7 @@ public class GameManager : MonoBehaviour
 
     private GameObject roundIndicator = null;
     private int roundEnemyCount = 0;
-    private int roundEnemySpawnTickElapsed = 0;
+    private float roundEnemySpawnTickElapsed = 0;
     private int roundNumber = 0;
     private float roundPostTimeElapsed = 0;
     private float roundPreTimeElapsed = 0;
@@ -128,7 +132,11 @@ public class GameManager : MonoBehaviour
 
     // Calculate the number of enemies for the round.
     private void CalculateRoundEnemyCount() {
-        
+        roundEnemyCount = GetWorldRoundEnemyBasePopulation();
+
+        for (int roundIndex = 1; roundIndex < roundNumber; roundIndex++) {
+            roundEnemyCount += Random.Range(1, GetWorldRoundEnemyIncreaseMaxAmount() + 1);
+        }
     }
 
     // Execute spawn command.
@@ -219,7 +227,7 @@ public class GameManager : MonoBehaviour
             }
 
             // Spawn an enemy on the map when timer elapses.
-            if (roundEnemySpawnTickElapsed <= 0) {
+            if (roundEnemySpawnTickElapsed <= 0 && roundEnemyCount > 0) {
                 roundEnemySpawnTickElapsed = 0;
                 MapManager.instance.SpawnUnitAtRandom();
                 roundEnemyCount--;
