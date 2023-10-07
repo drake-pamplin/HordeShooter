@@ -32,3 +32,8 @@ v0.3.0-ranged-enemy ============================================================
 - Added pathfinding logic.
 
 v0.4.0-round-logic ================================================================================
+- Added console manager.
+- Added round phase logic.
+- Added logic for each round phase.
+- Added enemy population escalation logic.
+- Added enemy spawn logic and animation.
