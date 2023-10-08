@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 using UnityEngine;
 
 public class MapManager : MonoBehaviour
@@ -29,6 +30,7 @@ public class MapManager : MonoBehaviour
         public int GetHeight() { return height; }
 
         private GameObject roomObject;
+        public GameObject GetRoomObject() { return roomObject; }
         
         private List<GameObject> tiles;
         public GameObject GetTileAtIndex(int index) {
@@ -97,6 +99,7 @@ public class MapManager : MonoBehaviour
     private int mapWidth;
     private Dictionary<int, GameObject> mapTiles = new Dictionary<int, GameObject>();
     private List<GameObject> spawnableTiles = new List<GameObject>();
+    private List<Room> rooms = new List<Room>();
     
     // Start is called before the first frame update
     void Start()
@@ -220,6 +223,7 @@ public class MapManager : MonoBehaviour
         GenerateRandomRooms();
 
         // Select rooms above a certain size.
+        SelectViableRooms();
 
         // Separate rooms.
         /*
@@ -229,6 +233,7 @@ public class MapManager : MonoBehaviour
                 - otherRoom.Move(direction, tileSizeUnit)
             Repeat while any rooms overlap.
         */
+        SeparateRooms();
 
         // Triangulate rooms.
 
@@ -239,7 +244,7 @@ public class MapManager : MonoBehaviour
 
     // Generate random rooms around origin.
     private void GenerateRandomRooms() {
-        Dictionary<int, Room> rooms = new Dictionary<int, Room>();
+        rooms = new List<Room>();
         
         // Generate a random number of rooms within range of origin.
         for (int roomIndex = 0; roomIndex < GameManager.instance.GetMapMaxNumberOfRooms(); roomIndex++) {
@@ -250,7 +255,7 @@ public class MapManager : MonoBehaviour
             int width = UnityEngine.Random.Range(GameManager.instance.GetMapMinRoomWidth(), GameManager.instance.GetMapMaxRoomWidth());
             int height = UnityEngine.Random.Range(GameManager.instance.GetMapMinRoomHeight(), GameManager.instance.GetMapMaxRoomHeight());
             Room room = new Room(roomIndex, coordinates, width, height);
-            rooms.Add(roomIndex, room);
+            rooms.Add(room);
         }
     }
     
@@ -813,6 +818,35 @@ public class MapManager : MonoBehaviour
             mapRender += mapTerrainString[mapIndex];
         }
         Debug.Log(mapRender);
+    }
+
+    // Select viable rooms.
+    private void SelectViableRooms() {
+        List<Room> nonViableRooms = new List<Room>();
+
+        // Form non-viable rooms list.
+        foreach (Room room in rooms) {
+            if (room.GetWidth() < GameManager.instance.GetMapViableRoomWidth() || room.GetHeight() < GameManager.instance.GetMapViableRoomHeight()) {
+                nonViableRooms.Add(room);
+            }
+        }
+
+        // Destroy non-viable rooms.
+        foreach (Room room in nonViableRooms) {
+            rooms.Remove(room);
+            Destroy(room.GetRoomObject());
+        }
+    }
+
+    // Separate rooms.
+    private void SeparateRooms() {
+        // Loop while any overlap exists
+
+            // Loop through rooms.
+
+                // For each room, check if overlap exists.
+
+                // If overlap exists, move the two rooms.
     }
 
     // Set the neighbors of a tile.

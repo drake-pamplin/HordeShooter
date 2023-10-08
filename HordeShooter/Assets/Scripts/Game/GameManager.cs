@@ -81,6 +81,10 @@ public class GameManager : MonoBehaviour
     public int GetMapMinRoomWidth() { return mapMinRoomWidth; }
     public int mapMaxRoomWidth = 30;
     public int GetMapMaxRoomWidth() { return mapMaxRoomWidth; }
+    public int mapViableRoomHeight = 10;
+    public int GetMapViableRoomHeight() { return mapViableRoomHeight; }
+    public int mapViableRoomWidth = 10;
+    public int GetMapViableRoomWidth() { return mapViableRoomWidth; }
     
     [Header ("Player Variables")]
     public float playerAccuracyMaxDeviance = 50.0f;
