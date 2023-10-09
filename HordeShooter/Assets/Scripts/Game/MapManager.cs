@@ -45,10 +45,11 @@ public class MapManager : MonoBehaviour
 
         public bool IsOverlapping(Room otherRoom) {
             // Get top left point and bottom right point for each rectangle.
-            Vector2 roomTopLeft = new Vector2(GetFirstTile().transform.position.x, GetFirstTile().transform.position.z);
-            Vector2 roomBottomRight = new Vector2(GetLastTile().transform.position.x, GetLastTile().transform.position.z);
-            Vector2 otherRoomTopLeft = new Vector2(otherRoom.GetFirstTile().transform.position.x, otherRoom.GetFirstTile().transform.position.z);
-            Vector2 otherRoomBottomRight = new Vector2(otherRoom.GetLastTile().transform.position.x, otherRoom.GetLastTile().transform.position.z);
+            int buffer = GameManager.instance.GetMapRoomBuffer();
+            Vector2 roomTopLeft = new Vector2(GetFirstTile().transform.position.x - buffer, GetFirstTile().transform.position.z + buffer);
+            Vector2 roomBottomRight = new Vector2(GetLastTile().transform.position.x + buffer, GetLastTile().transform.position.z - buffer);
+            Vector2 otherRoomTopLeft = new Vector2(otherRoom.GetFirstTile().transform.position.x - buffer, otherRoom.GetFirstTile().transform.position.z + buffer);
+            Vector2 otherRoomBottomRight = new Vector2(otherRoom.GetLastTile().transform.position.x + buffer, otherRoom.GetLastTile().transform.position.z - buffer);
 
             // Check if one rectangle is on the left side of the other.
             if (roomTopLeft.x > otherRoomBottomRight.x || otherRoomTopLeft.x > roomBottomRight.x) {
@@ -69,10 +70,10 @@ public class MapManager : MonoBehaviour
             roomObject.transform.position = new Vector3(coordinates.x, 0, coordinates.y);
             tiles = new List<GameObject>();
             int maxTiles = width * height;
-            Debug.Log(maxTiles);
+            Vector2 originPoint = new Vector2(Mathf.RoundToInt((width / 2) * -1), Mathf.RoundToInt(height / 2));
             for (int tileIndex = 0; tileIndex < maxTiles; tileIndex++) {
-                int xCoord = ((int)coordinates.x - (width / 2)) + (tileIndex % width);
-                int yCoord = ((int)coordinates.y + (height / 2)) - (tileIndex / width);
+                int xCoord = (int)originPoint.x + (tileIndex % width);
+                int yCoord = (int)originPoint.y - Mathf.RoundToInt(tileIndex / width);
                 GameObject tile = Instantiate(
                     PrefabManager.instance.GetPrefab(Constants.spriteFloorBase_0),
                     roomObject.transform
@@ -81,6 +82,11 @@ public class MapManager : MonoBehaviour
                 tile.name = "Tile_" + tileIndex;
                 tiles.Add(tile);
             }
+        }
+
+        // Move the room based on given input.
+        public void Move(Vector3 moveAmount) {
+            roomObject.transform.position += moveAmount;
         }
     }
     
@@ -217,13 +223,27 @@ public class MapManager : MonoBehaviour
         mapTiles.Add(mapIndex, mapTile);
     }
 
+    // Determine if overlap in rooms exists.
+    private bool DoesOverlapExist() {
+        foreach (Room room in rooms) {
+            foreach (Room otherRoom in rooms) {
+                if (room.GetId() == otherRoom.GetId()) {
+                    continue;
+                }
+
+                if (room.IsOverlapping(otherRoom)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
     // Generate a random map.
     private void GenerateRandomMap() {
         // Generate randomly sized rooms within radius of origin.
         GenerateRandomRooms();
-
-        // Select rooms above a certain size.
-        SelectViableRooms();
 
         // Separate rooms.
         /*
@@ -234,6 +254,9 @@ public class MapManager : MonoBehaviour
             Repeat while any rooms overlap.
         */
         SeparateRooms();
+
+        // Select rooms above a certain size.
+        SelectViableRooms();
 
         // Triangulate rooms.
 
@@ -824,7 +847,7 @@ public class MapManager : MonoBehaviour
     private void SelectViableRooms() {
         List<Room> nonViableRooms = new List<Room>();
 
-        // Form non-viable rooms list.
+        // Add rooms below the width and height threshold.
         foreach (Room room in rooms) {
             if (room.GetWidth() < GameManager.instance.GetMapViableRoomWidth() || room.GetHeight() < GameManager.instance.GetMapViableRoomHeight()) {
                 nonViableRooms.Add(room);
@@ -841,12 +864,38 @@ public class MapManager : MonoBehaviour
     // Separate rooms.
     private void SeparateRooms() {
         // Loop while any overlap exists
-
+        int deadDropCounter = 0;
+        while (DoesOverlapExist() && deadDropCounter < 10000) {
+            deadDropCounter++;
             // Loop through rooms.
-
+            foreach (Room room in rooms) {
                 // For each room, check if overlap exists.
+                foreach (Room otherRoom in rooms) {
+                    if (room.GetId() == otherRoom.GetId()) {
+                        continue;
+                    }
+                    
+                    // If no overlap exists, move on to the next room.
+                    if (!room.IsOverlapping(otherRoom)) {
+                        continue;
+                    }
 
-                // If overlap exists, move the two rooms.
+                    // If overlap exists, move the two rooms.
+                    Vector3 moveAmount = (otherRoom.GetRoomObject().transform.position - room.GetRoomObject().transform.position).normalized;
+                    
+                    // Round move direction to 0 or 1 for whole number based movement.
+                    moveAmount.x = Mathf.RoundToInt(moveAmount.x);
+                    moveAmount.z = Mathf.RoundToInt(moveAmount.z);
+
+                    // Move the rooms.
+                    room.Move(moveAmount * -1);
+                    otherRoom.Move(moveAmount);
+                }
+            }
+        }
+        if (deadDropCounter == 10000) {
+            Debug.LogError("Timed out at room separation.");
+        }
     }
 
     // Set the neighbors of a tile.

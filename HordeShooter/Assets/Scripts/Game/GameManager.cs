@@ -81,6 +81,8 @@ public class GameManager : MonoBehaviour
     public int GetMapMinRoomWidth() { return mapMinRoomWidth; }
     public int mapMaxRoomWidth = 30;
     public int GetMapMaxRoomWidth() { return mapMaxRoomWidth; }
+    public int mapRoomBuffer = 4;
+    public int GetMapRoomBuffer() { return mapRoomBuffer; }
     public int mapViableRoomHeight = 10;
     public int GetMapViableRoomHeight() { return mapViableRoomHeight; }
     public int mapViableRoomWidth = 10;
