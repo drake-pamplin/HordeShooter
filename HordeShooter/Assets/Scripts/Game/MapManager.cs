@@ -66,6 +66,7 @@ public class MapManager : MonoBehaviour
         }
 
         private void GenerateRoomTiles() {
+            // Create room object and add tiles.
             roomObject = new GameObject("Room_" + id);
             roomObject.transform.position = new Vector3(coordinates.x, 0, coordinates.y);
             tiles = new List<GameObject>();
@@ -82,11 +83,39 @@ public class MapManager : MonoBehaviour
                 tile.name = "Tile_" + tileIndex;
                 tiles.Add(tile);
             }
+
+            // Add collider for room connection and configure it.
+            roomObject.AddComponent<BoxCollider>();
+            roomObject.GetComponent<BoxCollider>().size = new Vector3(width, 1, height);
+            float centerX = width % 2 == 0 ? -0.5f : 0;
+            float centerY = height % 2 == 0 ? 0.5f : 0;
+            roomObject.GetComponent<BoxCollider>().center = new Vector3(centerX, 0, centerY);
         }
 
         // Move the room based on given input.
         public void Move(Vector3 moveAmount) {
             roomObject.transform.position += moveAmount;
+        }
+    }
+
+    private struct Connection {
+        public Connection(Room pointOne, Room pointTwo) {
+            this.pointOne = pointOne;
+            this.pointTwo = pointTwo;
+            distance = Vector3.Distance(pointOne.GetRoomObject().transform.position, pointTwo.GetRoomObject().transform.position);
+        }
+
+        private Room pointOne;
+        public Room GetPointOne() { return pointOne; }
+
+        private Room pointTwo;
+        public Room GetPointTwo() { return pointTwo; }
+
+        private float distance;
+        public float GetDistance() { return distance; }
+
+        public Room GetOtherPoint(Room room) {
+            return room.GetId() == GetPointOne().GetId() ? GetPointTwo() : GetPointOne();
         }
     }
     
@@ -106,17 +135,28 @@ public class MapManager : MonoBehaviour
     private Dictionary<int, GameObject> mapTiles = new Dictionary<int, GameObject>();
     private List<GameObject> spawnableTiles = new List<GameObject>();
     private List<Room> rooms = new List<Room>();
+    private List<Connection> connections = new List<Connection>();
+    private float mapGenerationDelay = 0;
+    private enum MapGenerationStages {
+        Generate,
+        Separate,
+        Select,
+        Triangulate,
+        Connect,
+        Done
+    }
+    private MapGenerationStages mapGenerationStage = MapGenerationStages.Generate;
     
     // Start is called before the first frame update
     void Start()
     {
-        GenerateRandomMap();
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        GenerateRandomMap();
     }
 
     // Build map
@@ -136,6 +176,60 @@ public class MapManager : MonoBehaviour
         for (int mapIndex = 0; mapIndex < mapWidth * mapHeight; mapIndex++) {
             CreateTerrainTile(mapIndex);
             CreateObjectTile(mapIndex);
+        }
+    }
+
+    // TODO: Comment code.
+    // Parse connections to form connected rooms.
+    private void ConnectRooms() {
+        List<Connection> mapConnections = new List<Connection>();
+        Room startRoom = rooms[0];
+        mapConnections.Add(GetAllConnectionsForRoom(rooms[0]).OrderBy(roomConnection => roomConnection.GetDistance()).ToList()[0]);
+        foreach (Room room in rooms) {
+            // If the room to map is the start room, skip.
+            if (room.GetId() == startRoom.GetId()) {
+                continue;
+            }
+
+            // If room is already mapped, skip.
+            if (RoomExistsInMap(mapConnections, room)) {
+                continue;
+            }
+
+            // Work through the connections, using the shortest path between rooms to get to the start room.
+            Room checkRoom = room;
+            List<Connection> roomPath = new List<Connection>();
+            while (!RoomExistsInMap(mapConnections, checkRoom)) {
+                List<Connection> roomConnections = GetAllConnectionsForRoom(checkRoom);
+
+                // Sort connections by distance from shortest to longest.
+                roomConnections = roomConnections.OrderBy(roomConnection => roomConnection.GetDistance()).ToList();
+
+                // Loop through connections to find the connection with the shortest distance.
+                Connection viableConnection = roomConnections[0];
+                foreach (Connection roomConnection in roomConnections) {
+                    // Loop is invalid.
+                    if (RoomExistsInMap(roomPath, roomConnection.GetOtherPoint(checkRoom))) {
+                        continue;
+                    }
+                    
+                    viableConnection = roomConnection;
+                    break;
+                }
+                roomPath.Add(viableConnection);
+                checkRoom = viableConnection.GetOtherPoint(checkRoom);
+            }
+            mapConnections.AddRange(roomPath);
+        }
+
+        connections = mapConnections;
+        
+        Debug.Log("Connections: " + connections.Count);
+        foreach (Connection connection in connections) {
+            Vector3 pointOne = connection.GetPointOne().GetRoomObject().transform.position;
+            Vector3 pointTwo = connection.GetPointTwo().GetRoomObject().transform.position;
+            Vector3 direction = pointTwo - pointOne;
+            Debug.DrawRay(pointOne, direction, Color.red, 100);
         }
     }
 
@@ -223,6 +317,52 @@ public class MapManager : MonoBehaviour
         mapTiles.Add(mapIndex, mapTile);
     }
 
+    // Determine if a connection already exists.
+    private bool DoesConnectionExist(Room room, Room otherRoom) {
+        foreach (Connection connection in connections) {
+            if (connection.GetPointOne().GetId() == room.GetId() && connection.GetPointTwo().GetId() == otherRoom.GetId()) {
+                return true;
+            }
+            if (connection.GetPointOne().GetId() == otherRoom.GetId() && connection.GetPointTwo().GetId() == room.GetId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Determine if a connection has both points in the map.
+    private bool DoesConnectionHaveBothPointsInMap(List<Connection> map, Connection checkConnection) {
+        bool firstPointInMap = false;
+        bool secondPointInMap = false;
+        foreach (Connection connection in map) {
+            if (checkConnection.GetPointOne().GetId() == connection.GetPointOne().GetId() ||
+                checkConnection.GetPointOne().GetId() == connection.GetPointTwo().GetId()
+            ) {
+                firstPointInMap = true;
+            }
+            if (checkConnection.GetPointTwo().GetId() == connection.GetPointOne().GetId() ||
+                checkConnection.GetPointTwo().GetId() == connection.GetPointTwo().GetId()
+            ) {
+                secondPointInMap = true;
+            }
+        }
+        return firstPointInMap && secondPointInMap;
+    }
+
+    // Determine if a connection has one of its points in the map.
+    private bool DoesConnectionHaveOnePointInMap(List<Connection> map, Connection checkConnection) {
+        // Loop through map connections to see if the given connection has a point present.
+        foreach (Connection connection in map) {
+            if (checkConnection.GetPointOne().GetId() == connection.GetPointOne().GetId() || checkConnection.GetPointOne().GetId() == connection.GetPointTwo().GetId()) {
+                return true;
+            }
+            if (checkConnection.GetPointTwo().GetId() == connection.GetPointOne().GetId() || checkConnection.GetPointTwo().GetId() == connection.GetPointTwo().GetId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Determine if overlap in rooms exists.
     private bool DoesOverlapExist() {
         foreach (Room room in rooms) {
@@ -242,8 +382,23 @@ public class MapManager : MonoBehaviour
 
     // Generate a random map.
     private void GenerateRandomMap() {
-        // Generate randomly sized rooms within radius of origin.
-        GenerateRandomRooms();
+        if (mapGenerationStage.Equals(MapGenerationStages.Generate)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate randomly sized rooms within radius of origin.
+                GenerateRandomRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Separate;
+            }
+        }
 
         // Separate rooms.
         /*
@@ -253,14 +408,80 @@ public class MapManager : MonoBehaviour
                 - otherRoom.Move(direction, tileSizeUnit)
             Repeat while any rooms overlap.
         */
-        SeparateRooms();
+        if (mapGenerationStage.Equals(MapGenerationStages.Separate)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate randomly sized rooms within radius of origin.
+                SeparateRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Select;
+            }
+        }
 
         // Select rooms above a certain size.
-        SelectViableRooms();
+        if (mapGenerationStage.Equals(MapGenerationStages.Select)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate randomly sized rooms within radius of origin.
+                SelectViableRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Triangulate;
+            }
+        }
 
         // Triangulate rooms.
+        if (mapGenerationStage.Equals(MapGenerationStages.Triangulate)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate randomly sized rooms within radius of origin.
+                TriangulateRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Connect;
+            }
+        }
 
         // Connect rooms using minimal spanning tree.
+        if (mapGenerationStage.Equals(MapGenerationStages.Connect)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate randomly sized rooms within radius of origin.
+                ConnectRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Done;
+            }
+        }
 
         // Generate paths between rooms using tree.
     }
@@ -280,6 +501,19 @@ public class MapManager : MonoBehaviour
             Room room = new Room(roomIndex, coordinates, width, height);
             rooms.Add(room);
         }
+    }
+    
+    // Get a list of all connections for a specific room.
+    private List<Connection> GetAllConnectionsForRoom(Room room) {
+        List<Connection> roomConnections = new List<Connection>();
+
+        foreach (Connection connection in connections) {
+            if (connection.GetPointOne().GetId() == room.GetId() || connection.GetPointTwo().GetId() == room.GetId()) {
+                roomConnections.Add(connection);
+            }
+        }
+
+        return roomConnections;
     }
     
     // Get the sprite for the tile location.
@@ -843,6 +1077,16 @@ public class MapManager : MonoBehaviour
         Debug.Log(mapRender);
     }
 
+    // Check if room exists in the map path.
+    private bool RoomExistsInMap(List<Connection> map, Room room) {
+        foreach (Connection connection in map) {
+            if (room.GetId() == connection.GetPointOne().GetId() || room.GetId() == connection.GetPointTwo().GetId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     // Select viable rooms.
     private void SelectViableRooms() {
         List<Room> nonViableRooms = new List<Room>();
@@ -857,6 +1101,7 @@ public class MapManager : MonoBehaviour
         // Destroy non-viable rooms.
         foreach (Room room in nonViableRooms) {
             rooms.Remove(room);
+            room.GetRoomObject().GetComponent<BoxCollider>().enabled = false;
             Destroy(room.GetRoomObject());
         }
     }
@@ -922,7 +1167,7 @@ public class MapManager : MonoBehaviour
             mapTile.GetComponent<Tile>().AddTile(Tile.TileDirection.Left, leftTile);
         }
     }
-
+    
     // Spawn a given unit at the given location.
     public void SpawnUnitAtLocation(GameObject unit, GameObject tile) {
         Debug.Log("Spawning " + unit.name + " unit at tile " + tile.GetComponent<Tile>().GetTileIndex());
@@ -971,5 +1216,60 @@ public class MapManager : MonoBehaviour
             tile.transform.position,
             Quaternion.identity
         );
+    }
+
+    // Triangulate created rooms.
+    private void TriangulateRooms() {
+        connections = new List<Connection>();
+        
+        // Add the first room to the queue.
+        Queue<Room> checkRooms = new Queue<Room>();
+        checkRooms.Enqueue(rooms[0]);
+
+        // While there are rooms in the queue.
+        while (checkRooms.Count != 0) {
+            Room room = checkRooms.Dequeue();
+
+            // Check all other rooms.
+            foreach (Room otherRoom in rooms) {
+                if (room.GetId() == otherRoom.GetId()) {
+                    continue;
+                }
+                // Debug.Log("Checking connection viability for " + room.GetId() + " and " + otherRoom.GetId());
+                
+                // Connect two rooms that meet the following criteria:
+                // - Have clear line of sight.
+                // - Are not already connected.
+                RaycastHit hit;
+                if (Physics.Linecast(room.GetRoomObject().transform.position, otherRoom.GetRoomObject().transform.position, out hit)) {
+                    if (!hit.collider.gameObject.name.Equals(otherRoom.GetRoomObject().name)) {
+                        // Debug.Log("Collision detected for " + room.GetId() + " and " + otherRoom.GetId() + " at " + hit.collider.gameObject.name);
+                        continue;
+                    }
+                } else {
+                    // Debug.Log("Continuing creation for connection between " + room.GetId() + " and " + otherRoom.GetId());
+                }
+                if (DoesConnectionExist(room, otherRoom)) {
+                    // Debug.Log("Connection exists for " + room.GetId());
+                    continue;
+                }
+
+                // Create new connection.
+                // Debug.Log("Creating new connection for " + room.GetId() + " and " + otherRoom.GetId());
+                Connection connection = new Connection(room, otherRoom);
+                connections.Add(connection);
+                
+                // Add any rooms that were connected to the queue.
+                checkRooms.Enqueue(otherRoom);
+            }
+        }
+
+        // Debug.Log("Connections: " + connections.Count);
+        foreach (Connection connection in connections) {
+            Vector3 pointOne = connection.GetPointOne().GetRoomObject().transform.position;
+            Vector3 pointTwo = connection.GetPointTwo().GetRoomObject().transform.position;
+            Vector3 direction = pointTwo - pointOne;
+            Debug.DrawRay(pointOne, direction, Color.red, 1);
+        }
     }
 }

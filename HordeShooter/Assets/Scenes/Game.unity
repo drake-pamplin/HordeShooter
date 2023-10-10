@@ -686,14 +686,14 @@ MonoBehaviour:
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
   enemyTargetingOffset: 1
+  mapCreationDelay: 1
   mapMaxDevianceFromOrigin: 10
-  mapMaxNumberOfRooms: 100
+  mapMaxNumberOfRooms: 50
   mapMinRoomHeight: 1
   mapMaxRoomHeight: 50
   mapMinRoomWidth: 1
   mapMaxRoomWidth: 50
-  mapRoomBuffer: 3
-  mapRoomRemovalPercentage: 0.5
+  mapRoomBuffer: 5
   mapViableRoomHeight: 20
   mapViableRoomWidth: 20
   playerAccuracyMaxDeviance: 10
