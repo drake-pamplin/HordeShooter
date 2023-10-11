@@ -222,23 +222,6 @@ public class MapManager : MonoBehaviour
                     break;
                 }
                 roomPath.Add(viableConnection);
-                
-                // For each connection, there is a 10% chance to add an additional connection to prevent things from being too linear.
-                int connectionChance = UnityEngine.Random.Range(0, 101);
-                if (connectionChance <= GameManager.instance.GetMapAdditionalConnectionsPercentage()) {
-                    // Loop through connections to find a valid connection with the shortest distance.
-                    Connection extraConnection = roomConnections[0];
-                    foreach (Connection roomConnection in roomConnections) {
-                        // Any loop is invalid.
-                        if (RoomExistsInMap(roomPath, roomConnection.GetOtherPoint(checkRoom))) {
-                            continue;
-                        }
-                        
-                        extraConnection = roomConnection;
-                        break;
-                    }
-                    roomPath.Add(extraConnection);
-                }
 
                 // Set the room 
                 checkRoom = viableConnection.GetOtherPoint(checkRoom);
@@ -406,6 +389,46 @@ public class MapManager : MonoBehaviour
         return false;
     }
 
+    // Fill the map in with tiles.
+    private void FillInMap() {
+        Debug.Log("Filling in map.");
+        
+        // Get left most coordinate.
+        int leftCoord = 0;
+        // Get right most coordinate.
+        int rightCoord = 0;
+        // Get top most coordinate.
+        int topCoord = 0;
+        // Get bottom most coordinate.
+        int bottomCoord = 0;
+        foreach (Room room in rooms) {
+            GameObject firstTile = room.GetFirstTile();
+            GameObject lastTile = room.GetLastTile();
+
+            leftCoord = Mathf.RoundToInt(firstTile.transform.position.x < leftCoord ? firstTile.transform.position.x : leftCoord);
+            rightCoord = Mathf.RoundToInt(lastTile.transform.position.x > rightCoord ? lastTile.transform.position.x : rightCoord);
+            topCoord = Mathf.RoundToInt(firstTile.transform.position.z > topCoord ? firstTile.transform.position.z : topCoord);
+            bottomCoord = Mathf.RoundToInt(lastTile.transform.position.z < bottomCoord ? lastTile.transform.position.z : bottomCoord);
+        }
+        // Calculate width.
+        int mapWidth = (rightCoord - leftCoord) + 1;
+        // Calculate height.
+        int mapHeight = (topCoord - bottomCoord) + 1;
+
+        // Starting from the top right, insert a tile object at each coordinate.
+        Vector3 startPos = new Vector3(leftCoord, 0, topCoord);
+        for (int tileIndex = 0; tileIndex < mapWidth * mapHeight; tileIndex++) {
+            Vector3 tilePosition = new Vector3(startPos.x + tileIndex % mapWidth, 0, startPos.z - tileIndex / mapWidth);
+            GameObject newTile = Instantiate(
+                PrefabManager.instance.GetPrefab(Constants.gameObjectTileBase),
+                tilePosition,
+                Quaternion.identity
+            );
+        }
+
+        Debug.Log("Map filled in.");
+    }
+    
     // Generate a random map.
     private void GenerateRandomMap() {
         if (mapGenerationStage.Equals(MapGenerationStages.Generate)) {
@@ -549,6 +572,7 @@ public class MapManager : MonoBehaviour
     // Generate halls between the rooms.
     private void GenerateRoomHalls() {
         // Fill in map with empty tiles to allow pathfinding.
+        FillInMap();
 
         // Loop through map connections and connect the rooms with hallways.
             // For both rooms in the connection, do the following:

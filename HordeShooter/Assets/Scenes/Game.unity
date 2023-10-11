@@ -686,6 +686,7 @@ MonoBehaviour:
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
   enemyTargetingOffset: 1
+  mapAdditionalConnectionsPercentage: -1
   mapCreationDelay: 1
   mapMaxDevianceFromOrigin: 10
   mapMaxNumberOfRooms: 50
