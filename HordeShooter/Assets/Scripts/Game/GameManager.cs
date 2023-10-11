@@ -69,6 +69,8 @@ public class GameManager : MonoBehaviour
     public float GetEnemyTargetingOffset() { return enemyTargetingOffset; }
 
     [Header ("Map Generation Variables")]
+    public int mapAdditionalConnectionsPercentage = 10;
+    public int GetMapAdditionalConnectionsPercentage() { return mapAdditionalConnectionsPercentage; }
     public float mapCreationDelay = 1.0f;
     public float GetMapCreationDelay() { return mapCreationDelay; }
     public float mapMaxDevianceFromOrigin = 10f;

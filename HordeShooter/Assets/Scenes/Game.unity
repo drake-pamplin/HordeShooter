@@ -693,7 +693,7 @@ MonoBehaviour:
   mapMaxRoomHeight: 50
   mapMinRoomWidth: 1
   mapMaxRoomWidth: 50
-  mapRoomBuffer: 5
+  mapRoomBuffer: 4
   mapViableRoomHeight: 20
   mapViableRoomWidth: 20
   playerAccuracyMaxDeviance: 10

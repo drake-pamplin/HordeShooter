@@ -143,6 +143,7 @@ public class MapManager : MonoBehaviour
         Select,
         Triangulate,
         Connect,
+        Pathen,
         Done
     }
     private MapGenerationStages mapGenerationStage = MapGenerationStages.Generate;
@@ -179,10 +180,13 @@ public class MapManager : MonoBehaviour
         }
     }
 
-    // TODO: Comment code.
-    // Parse connections to form connected rooms.
+    // TODO: Check for hall intersections on the bonus connections.
+    // Connect the triangulated rooms together with flow in mind.
     private void ConnectRooms() {
+        // Create a list of connections for the final map.
         List<Connection> mapConnections = new List<Connection>();
+        
+        // Set the first room as the start room and begin filling the map by looping through each room and connecting it to the start room.
         Room startRoom = rooms[0];
         mapConnections.Add(GetAllConnectionsForRoom(rooms[0]).OrderBy(roomConnection => roomConnection.GetDistance()).ToList()[0]);
         foreach (Room room in rooms) {
@@ -196,19 +200,20 @@ public class MapManager : MonoBehaviour
                 continue;
             }
 
-            // Work through the connections, using the shortest path between rooms to get to the start room.
+            // Work through the connections, using the shortest path between rooms until a room in the main map is connected to.
             Room checkRoom = room;
             List<Connection> roomPath = new List<Connection>();
             while (!RoomExistsInMap(mapConnections, checkRoom)) {
+                // Get all connections for the room.
                 List<Connection> roomConnections = GetAllConnectionsForRoom(checkRoom);
 
                 // Sort connections by distance from shortest to longest.
                 roomConnections = roomConnections.OrderBy(roomConnection => roomConnection.GetDistance()).ToList();
 
-                // Loop through connections to find the connection with the shortest distance.
+                // Loop through connections to find a valid connection with the shortest distance.
                 Connection viableConnection = roomConnections[0];
                 foreach (Connection roomConnection in roomConnections) {
-                    // Loop is invalid.
+                    // Any loop is invalid.
                     if (RoomExistsInMap(roomPath, roomConnection.GetOtherPoint(checkRoom))) {
                         continue;
                     }
@@ -217,19 +222,40 @@ public class MapManager : MonoBehaviour
                     break;
                 }
                 roomPath.Add(viableConnection);
+                
+                // For each connection, there is a 10% chance to add an additional connection to prevent things from being too linear.
+                int connectionChance = UnityEngine.Random.Range(0, 101);
+                if (connectionChance <= GameManager.instance.GetMapAdditionalConnectionsPercentage()) {
+                    // Loop through connections to find a valid connection with the shortest distance.
+                    Connection extraConnection = roomConnections[0];
+                    foreach (Connection roomConnection in roomConnections) {
+                        // Any loop is invalid.
+                        if (RoomExistsInMap(roomPath, roomConnection.GetOtherPoint(checkRoom))) {
+                            continue;
+                        }
+                        
+                        extraConnection = roomConnection;
+                        break;
+                    }
+                    roomPath.Add(extraConnection);
+                }
+
+                // Set the room 
                 checkRoom = viableConnection.GetOtherPoint(checkRoom);
             }
+            
+            // Add the room path to the overall map.
             mapConnections.AddRange(roomPath);
         }
 
+        // Set the main connections list as the now refined map connections.
         connections = mapConnections;
         
-        Debug.Log("Connections: " + connections.Count);
         foreach (Connection connection in connections) {
             Vector3 pointOne = connection.GetPointOne().GetRoomObject().transform.position;
             Vector3 pointTwo = connection.GetPointTwo().GetRoomObject().transform.position;
             Vector3 direction = pointTwo - pointOne;
-            Debug.DrawRay(pointOne, direction, Color.red, 100);
+            Debug.DrawRay(pointOne, direction, Color.red, GameManager.instance.GetMapCreationDelay());
         }
     }
 
@@ -437,7 +463,7 @@ public class MapManager : MonoBehaviour
             }
 
             if (mapGenerationDelay <= 0) {
-                // Generate randomly sized rooms within radius of origin.
+                // Filter out the non-viable rooms.
                 SelectViableRooms();
 
                 mapGenerationDelay = 0;
@@ -456,7 +482,7 @@ public class MapManager : MonoBehaviour
             }
 
             if (mapGenerationDelay <= 0) {
-                // Generate randomly sized rooms within radius of origin.
+                // Triangulate the generated rooms.
                 TriangulateRooms();
 
                 mapGenerationDelay = 0;
@@ -475,15 +501,32 @@ public class MapManager : MonoBehaviour
             }
 
             if (mapGenerationDelay <= 0) {
-                // Generate randomly sized rooms within radius of origin.
+                // Connect rooms in the map in a minimum spanning tree.
                 ConnectRooms();
+
+                mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Pathen;
+            }
+        }
+
+        // Generate paths between rooms using tree.
+        if (mapGenerationStage.Equals(MapGenerationStages.Pathen)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate halls between rooms.
+                GenerateRoomHalls();
 
                 mapGenerationDelay = 0;
                 mapGenerationStage = MapGenerationStages.Done;
             }
         }
-
-        // Generate paths between rooms using tree.
     }
 
     // Generate random rooms around origin.
@@ -501,6 +544,19 @@ public class MapManager : MonoBehaviour
             Room room = new Room(roomIndex, coordinates, width, height);
             rooms.Add(room);
         }
+    }
+    
+    // Generate halls between the rooms.
+    private void GenerateRoomHalls() {
+        // Fill in map with empty tiles to allow pathfinding.
+
+        // Loop through map connections and connect the rooms with hallways.
+            // For both rooms in the connection, do the following:
+            // - Compare the rooms' positions and determine which side the halls should connect on.
+            // - Also determine what end (top/bottom, left/right) of that side the hall should connect on to allow for multiple halls on one side.
+            // - Determine a tile for each room based on the side and end from the above steps.
+            // - Determine a path between the two tiles.
+            // - Build the path out.
     }
     
     // Get a list of all connections for a specific room.
@@ -1269,7 +1325,7 @@ public class MapManager : MonoBehaviour
             Vector3 pointOne = connection.GetPointOne().GetRoomObject().transform.position;
             Vector3 pointTwo = connection.GetPointTwo().GetRoomObject().transform.position;
             Vector3 direction = pointTwo - pointOne;
-            Debug.DrawRay(pointOne, direction, Color.red, 1);
+            Debug.DrawRay(pointOne, direction, Color.red, GameManager.instance.GetMapCreationDelay());
         }
     }
 }
