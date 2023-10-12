@@ -42,6 +42,15 @@ public class MapManager : MonoBehaviour
         }
         public GameObject GetFirstTile() { return tiles[0]; }
         public GameObject GetLastTile() { return tiles[tiles.Count - 1]; }
+        public GameObject GetTileAtPosition(Vector3 position) {
+            foreach (GameObject tile in tiles) {
+                if (tile.transform.position == position) {
+                    return tile;
+                }
+            }
+            return null;
+        }
+        public List<GameObject> GetAllTiles() { return tiles; }
 
         public bool IsOverlapping(Room otherRoom) {
             // Get top left point and bottom right point for each rectangle.
@@ -180,7 +189,6 @@ public class MapManager : MonoBehaviour
         }
     }
 
-    // TODO: Check for hall intersections on the bonus connections.
     // Connect the triangulated rooms together with flow in mind.
     private void ConnectRooms() {
         // Create a list of connections for the final map.
@@ -410,12 +418,26 @@ public class MapManager : MonoBehaviour
             topCoord = Mathf.RoundToInt(firstTile.transform.position.z > topCoord ? firstTile.transform.position.z : topCoord);
             bottomCoord = Mathf.RoundToInt(lastTile.transform.position.z < bottomCoord ? lastTile.transform.position.z : bottomCoord);
         }
+        leftCoord -= GameManager.instance.GetMapBorderBuffer();
+        rightCoord += GameManager.instance.GetMapBorderBuffer();
+        topCoord += GameManager.instance.GetMapBorderBuffer();
+        bottomCoord -= GameManager.instance.GetMapBorderBuffer();
         // Calculate width.
-        int mapWidth = (rightCoord - leftCoord) + 1;
+        int mapWidth = rightCoord - leftCoord + 1;
         // Calculate height.
-        int mapHeight = (topCoord - bottomCoord) + 1;
+        int mapHeight = topCoord - bottomCoord + 1;
 
-        // Starting from the top right, insert a tile object at each coordinate.
+        // Assign each tile to a dictionary.
+        Dictionary<Vector3, GameObject> roomTileDictionary = new Dictionary<Vector3, GameObject>();
+        foreach (Room room in rooms) {
+            List<GameObject> tiles = room.GetAllTiles();
+            foreach (GameObject tile in tiles) {
+                roomTileDictionary.Add(tile.transform.position, tile);
+            }
+        }
+
+        // Starting from the top right, insert a tile object at each coordinate, inserting room tiles as they are encountered.
+        mapTiles = new Dictionary<int, GameObject>();
         Vector3 startPos = new Vector3(leftCoord, 0, topCoord);
         for (int tileIndex = 0; tileIndex < mapWidth * mapHeight; tileIndex++) {
             Vector3 tilePosition = new Vector3(startPos.x + tileIndex % mapWidth, 0, startPos.z - tileIndex / mapWidth);
@@ -424,6 +446,10 @@ public class MapManager : MonoBehaviour
                 tilePosition,
                 Quaternion.identity
             );
+            newTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + tileIndex;
+            if (!roomTileDictionary.ContainsKey(tilePosition)) {
+                newTile.GetComponent<Tile>().SetTraversable(true);
+            }
         }
 
         Debug.Log("Map filled in.");
@@ -442,6 +468,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Generate randomly sized rooms within radius of origin.
+                Debug.Log("Generating rooms.");
                 GenerateRandomRooms();
 
                 mapGenerationDelay = 0;
@@ -468,6 +495,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Generate randomly sized rooms within radius of origin.
+                Debug.Log("Separating rooms.");
                 SeparateRooms();
 
                 mapGenerationDelay = 0;
@@ -487,6 +515,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Filter out the non-viable rooms.
+                Debug.Log("Selecting viable rooms.");
                 SelectViableRooms();
 
                 mapGenerationDelay = 0;
@@ -506,6 +535,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Triangulate the generated rooms.
+                Debug.Log("Triangulating rooms.");
                 TriangulateRooms();
 
                 mapGenerationDelay = 0;
@@ -525,6 +555,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Connect rooms in the map in a minimum spanning tree.
+                Debug.Log("Connecting rooms.");
                 ConnectRooms();
 
                 mapGenerationDelay = 0;
@@ -544,6 +575,7 @@ public class MapManager : MonoBehaviour
 
             if (mapGenerationDelay <= 0) {
                 // Generate halls between rooms.
+                Debug.Log("Generating halls for rooms.");
                 GenerateRoomHalls();
 
                 mapGenerationDelay = 0;
@@ -788,7 +820,7 @@ public class MapManager : MonoBehaviour
 
         return routePoints;
     }
-
+    
     // Get the tile below the player.
     public GameObject GetTileBelowPlayer() {
         // Raycast down.
