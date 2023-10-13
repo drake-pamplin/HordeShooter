@@ -6,6 +6,18 @@ using UnityEngine;
 
 public class MapManager : MonoBehaviour
 {
+    private enum RoomSide {
+        Bottom,
+        Left,
+        Right,
+        Top
+    }
+    private enum RoomSideEnd {
+        Bottom,
+        Left,
+        Right,
+        Top
+    }
     private struct Room {
         public Room(int id, Vector2 coordinates, int width, int height) : this() {
             this.id = id;
@@ -52,28 +64,6 @@ public class MapManager : MonoBehaviour
         }
         public List<GameObject> GetAllTiles() { return tiles; }
 
-        public bool IsOverlapping(Room otherRoom) {
-            // Get top left point and bottom right point for each rectangle.
-            int buffer = GameManager.instance.GetMapRoomBuffer();
-            Vector2 roomTopLeft = new Vector2(GetFirstTile().transform.position.x - buffer, GetFirstTile().transform.position.z + buffer);
-            Vector2 roomBottomRight = new Vector2(GetLastTile().transform.position.x + buffer, GetLastTile().transform.position.z - buffer);
-            Vector2 otherRoomTopLeft = new Vector2(otherRoom.GetFirstTile().transform.position.x - buffer, otherRoom.GetFirstTile().transform.position.z + buffer);
-            Vector2 otherRoomBottomRight = new Vector2(otherRoom.GetLastTile().transform.position.x + buffer, otherRoom.GetLastTile().transform.position.z - buffer);
-
-            // Check if one rectangle is on the left side of the other.
-            if (roomTopLeft.x > otherRoomBottomRight.x || otherRoomTopLeft.x > roomBottomRight.x) {
-                return false;
-            }
-
-            // Check if one rectangle is on above the other.
-            if (roomBottomRight.y > otherRoomTopLeft.y || otherRoomBottomRight.y > roomTopLeft.y) {
-                return false;
-            }
-            
-            // If no above conditions are met, the two are overlapping.
-            return true;
-        }
-
         private void GenerateRoomTiles() {
             // Create room object and add tiles.
             roomObject = new GameObject("Room_" + id);
@@ -99,6 +89,57 @@ public class MapManager : MonoBehaviour
             float centerX = width % 2 == 0 ? -0.5f : 0;
             float centerY = height % 2 == 0 ? 0.5f : 0;
             roomObject.GetComponent<BoxCollider>().center = new Vector3(centerX, 0, centerY);
+        }
+
+        // Get the tile for hallway pathfinding based on the given other room.
+        public GameObject GetTileForHallwayConnection(Room otherRoom) {
+            // Get the side of the room the hallway will connect to.
+            RoomSide roomSide;
+            RoomSideEnd roomSideEnd;
+            Vector3 direction = (otherRoom.GetRoomObject().transform.position - GetRoomObject().transform.position).normalized;
+            if (Mathf.Abs(direction.x) > Mathf.Abs(direction.z)) {
+                // Horizontal
+                if (direction.x < 0) {
+                    // Left
+                    roomSide = RoomSide.Left;
+                } else {
+                    // Right
+                    roomSide = RoomSide.Right;
+                }
+            } else {
+                // Vertical
+                if (direction.z > 0) {
+                    // Top
+                    roomSide = RoomSide.Top;
+                } else {
+                    // Bottom
+                    roomSide = RoomSide.Bottom;
+                }
+            }
+            Debug.Log("Side for hallaway connection between room " + GetRoomObject().name + " and other room " + otherRoom.GetRoomObject().name + " is " + roomSide);
+            return null;
+        }
+
+        public bool IsOverlapping(Room otherRoom) {
+            // Get top left point and bottom right point for each rectangle.
+            int buffer = GameManager.instance.GetMapRoomBuffer();
+            Vector2 roomTopLeft = new Vector2(GetFirstTile().transform.position.x - buffer, GetFirstTile().transform.position.z + buffer);
+            Vector2 roomBottomRight = new Vector2(GetLastTile().transform.position.x + buffer, GetLastTile().transform.position.z - buffer);
+            Vector2 otherRoomTopLeft = new Vector2(otherRoom.GetFirstTile().transform.position.x - buffer, otherRoom.GetFirstTile().transform.position.z + buffer);
+            Vector2 otherRoomBottomRight = new Vector2(otherRoom.GetLastTile().transform.position.x + buffer, otherRoom.GetLastTile().transform.position.z - buffer);
+
+            // Check if one rectangle is on the left side of the other.
+            if (roomTopLeft.x > otherRoomBottomRight.x || otherRoomTopLeft.x > roomBottomRight.x) {
+                return false;
+            }
+
+            // Check if one rectangle is on above the other.
+            if (roomBottomRight.y > otherRoomTopLeft.y || otherRoomBottomRight.y > roomTopLeft.y) {
+                return false;
+            }
+            
+            // If no above conditions are met, the two are overlapping.
+            return true;
         }
 
         // Move the room based on given input.
@@ -607,12 +648,16 @@ public class MapManager : MonoBehaviour
         FillInMap();
 
         // Loop through map connections and connect the rooms with hallways.
+        foreach (Connection connection in connections) {
             // For both rooms in the connection, do the following:
             // - Compare the rooms' positions and determine which side the halls should connect on.
             // - Also determine what end (top/bottom, left/right) of that side the hall should connect on to allow for multiple halls on one side.
             // - Determine a tile for each room based on the side and end from the above steps.
             // - Determine a path between the two tiles.
             // - Build the path out.
+            connection.GetPointOne().GetTileForHallwayConnection(connection.GetPointTwo());
+            connection.GetPointTwo().GetTileForHallwayConnection(connection.GetPointOne());
+        }
     }
     
     // Get a list of all connections for a specific room.
