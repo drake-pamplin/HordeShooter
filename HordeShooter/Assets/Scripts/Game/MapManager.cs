@@ -63,6 +63,7 @@ public class MapManager : MonoBehaviour
             return null;
         }
         public List<GameObject> GetAllTiles() { return tiles; }
+        public int GetTileCount() { return tiles.Count; }
 
         private void GenerateRoomTiles() {
             // Create room object and add tiles.
@@ -116,8 +117,49 @@ public class MapManager : MonoBehaviour
                     roomSide = RoomSide.Bottom;
                 }
             }
-            Debug.Log("Side for hallaway connection between room " + GetRoomObject().name + " and other room " + otherRoom.GetRoomObject().name + " is " + roomSide);
-            return null;
+
+            // Get the end of the wall that the hall will connect.
+            if (roomSide.Equals(RoomSide.Left) || roomSide.Equals(RoomSide.Right)) {
+                // Left and right
+                if (otherRoom.GetRoomObject().transform.position.z > GetRoomObject().transform.position.z) {
+                    roomSideEnd = RoomSideEnd.Top;
+                } else {
+                    roomSideEnd = RoomSideEnd.Bottom;
+                }
+            } else {
+                // Top and bottom
+                if (otherRoom.GetRoomObject().transform.position.x > GetRoomObject().transform.position.x) {
+                    roomSideEnd = RoomSideEnd.Right;
+                } else {
+                    roomSideEnd = RoomSideEnd.Left;
+                }
+            }
+            Debug.Log("Side for hallaway connection between room " + GetRoomObject().name + " and other room " + otherRoom.GetRoomObject().name + " is " + roomSide + " " + roomSideEnd);
+            
+            // Get the tile to connect to.
+            int tileIndex = 0;
+            if (roomSide.Equals(RoomSide.Top)) {
+                tileIndex = GetWidth() / 2;
+            } else if (roomSide.Equals(RoomSide.Right)) {
+                tileIndex = GetWidth() * (GetHeight() / 2) - 1;
+            } else if (roomSide.Equals(RoomSide.Bottom)) {
+                tileIndex = (GetTileCount() - 1) - (GetWidth() / 2);
+            } else {
+                tileIndex = GetWidth() * (GetHeight() / 2);
+            }
+
+            if (roomSideEnd.Equals(RoomSideEnd.Top)) {
+                tileIndex -= GetWidth() * (GetHeight() / 4);
+            } else if (roomSideEnd.Equals(RoomSideEnd.Right)) {
+                tileIndex += GetWidth() / 4;
+            } else if (roomSideEnd.Equals(RoomSideEnd.Bottom)) {
+                tileIndex += GetWidth() * (GetHeight() / 4);
+            } else {
+                tileIndex -= GetWidth() / 4;
+            }
+
+            Debug.Log("Tile for hallway connection in room " + GetRoomObject().name + " is " + GetTileAtIndex(tileIndex).name);
+            return GetTileAtIndex(tileIndex);
         }
 
         public bool IsOverlapping(Room otherRoom) {
@@ -183,6 +225,7 @@ public class MapManager : MonoBehaviour
     private int mapHeight;
     private int mapWidth;
     private Dictionary<int, GameObject> mapTiles = new Dictionary<int, GameObject>();
+    private Dictionary<Vector3, int> mapTilePositions = new Dictionary<Vector3, int>();
     private List<GameObject> spawnableTiles = new List<GameObject>();
     private List<Room> rooms = new List<Room>();
     private List<Connection> connections = new List<Connection>();
@@ -482,15 +525,38 @@ public class MapManager : MonoBehaviour
         Vector3 startPos = new Vector3(leftCoord, 0, topCoord);
         for (int tileIndex = 0; tileIndex < mapWidth * mapHeight; tileIndex++) {
             Vector3 tilePosition = new Vector3(startPos.x + tileIndex % mapWidth, 0, startPos.z - tileIndex / mapWidth);
-            GameObject newTile = Instantiate(
+            GameObject newTileObject = Instantiate(
                 PrefabManager.instance.GetPrefab(Constants.gameObjectTileBase),
                 tilePosition,
                 Quaternion.identity
             );
-            newTile.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + tileIndex;
+            newTileObject.name = Constants.gameObjectTileBase + Constants.splitCharUnderscore + tileIndex;
+            Tile newTile = newTileObject.GetComponent<Tile>();
             if (!roomTileDictionary.ContainsKey(tilePosition)) {
-                newTile.GetComponent<Tile>().SetTraversable(true);
+                newTileObject.GetComponent<Tile>().SetTraversable(true);
             }
+            newTile.SetTileIndex(tileIndex);
+
+            // Connect the new tile to the surrounding tiles.
+            int leftTileIndex = tileIndex - 1;
+            int topTileIndex = tileIndex - mapWidth;
+            GameObject leftTileObject = null;
+            mapTiles.TryGetValue(leftTileIndex, out leftTileObject);
+            GameObject topTileObject = null;
+            mapTiles.TryGetValue(topTileIndex, out topTileObject);
+
+            if (leftTileObject != null) {
+                Tile leftTile = leftTileObject.GetComponent<Tile>();
+                newTile.AddTile(Tile.TileDirection.Left, leftTileObject);
+                leftTile.AddTile(Tile.TileDirection.Right, newTileObject);
+            }
+            if (topTileObject != null) {
+                Tile topTile = topTileObject.GetComponent<Tile>();
+                newTile.AddTile(Tile.TileDirection.Top, topTileObject);
+                topTile.AddTile(Tile.TileDirection.Bottom, newTileObject);
+            }
+            mapTiles.Add(tileIndex, newTileObject);
+            mapTilePositions.Add(newTileObject.transform.position, tileIndex);
         }
 
         Debug.Log("Map filled in.");
@@ -649,14 +715,79 @@ public class MapManager : MonoBehaviour
 
         // Loop through map connections and connect the rooms with hallways.
         foreach (Connection connection in connections) {
+            // Clean up tiles.
+            foreach (KeyValuePair<int, GameObject> entry in mapTiles) {
+                entry.Value.GetComponent<Tile>().ResetPathStep();
+            }
+            
             // For both rooms in the connection, do the following:
             // - Compare the rooms' positions and determine which side the halls should connect on.
             // - Also determine what end (top/bottom, left/right) of that side the hall should connect on to allow for multiple halls on one side.
             // - Determine a tile for each room based on the side and end from the above steps.
+            GameObject startTileObject = GetTileAtPosition(connection.GetPointOne().GetTileForHallwayConnection(connection.GetPointTwo()).transform.position);
+            Tile startTile = startTileObject.GetComponent<Tile>();
+            startTile.SetTraversable(true);
+            startTile.SetPathStep(0);
+            GameObject endTileObject = GetTileAtPosition(connection.GetPointTwo().GetTileForHallwayConnection(connection.GetPointOne()).transform.position);
+            Tile endTile = endTileObject.GetComponent<Tile>();
+            endTile.SetTraversable(true);
+
             // - Determine a path between the two tiles.
+            Queue<GameObject> tileQueue = new Queue<GameObject>();
+            tileQueue.Enqueue(startTileObject);
+            while (tileQueue.Count > 0) {
+                GameObject tileObject = tileQueue.Dequeue();
+                Tile tile = tileObject.GetComponent<Tile>();
+
+                foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
+                    GameObject otherTileObject = tile.GetTileInDirection(tileDirection);
+                    if (otherTileObject == null) {
+                        continue;
+                    }
+                    Tile otherTile = otherTileObject.GetComponent<Tile>();
+
+                    if (otherTile.IsTraversable() && tile.GetPathStep() + 1 < otherTile.GetPathStep()) {
+                        otherTile.SetPathStep(tile.GetPathStep() + 1);
+                        tileQueue.Enqueue(otherTileObject);
+                    }
+                }
+            }
+
+            List<GameObject> path = new List<GameObject>();
+            path.Add(endTileObject);
+            GameObject checkTileObject = endTileObject;
+            Tile checkTile = checkTileObject.GetComponent<Tile>();
+            Debug.Log(checkTile.GetTileIndex() + ", " + startTile.GetTileIndex());
+            while (checkTile.GetTileIndex() != startTile.GetTileIndex()) {
+                foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
+                    GameObject otherTileObject = checkTile.GetTileInDirection(tileDirection);
+                    if (otherTileObject == null) {
+                        continue;
+                    }
+                    Tile otherTile = otherTileObject.GetComponent<Tile>();
+
+                    Debug.Log(otherTile.GetPathStep() + ", " + (checkTile.GetPathStep() - 1));
+                    if (otherTile.GetPathStep() == checkTile.GetPathStep() - 1) {
+                        path.Add(otherTileObject);
+                        checkTileObject = otherTileObject;
+                        checkTile = checkTileObject.GetComponent<Tile>();
+                        break;
+                    }
+                }
+            }
+            Debug.Log(path.Count);
+            path.Reverse();
+            path.RemoveAt(path.Count - 1);
+            path.RemoveAt(0);
+
             // - Build the path out.
-            connection.GetPointOne().GetTileForHallwayConnection(connection.GetPointTwo());
-            connection.GetPointTwo().GetTileForHallwayConnection(connection.GetPointOne());
+            foreach (GameObject tileObject in path) {
+                GameObject newTileObject = Instantiate(
+                    PrefabManager.instance.GetPrefab(Constants.spriteFloorBase_0),
+                    tileObject.transform.position,
+                    Quaternion.identity
+                );
+            }
         }
     }
     
@@ -864,6 +995,15 @@ public class MapManager : MonoBehaviour
         }
 
         return routePoints;
+    }
+    
+    // Get the tile at a given position.
+    private GameObject GetTileAtPosition(Vector3 position) {
+        GameObject tile = null;
+        int tileIndex = 0;
+        mapTilePositions.TryGetValue(position, out tileIndex);
+        mapTiles.TryGetValue(tileIndex, out tile);
+        return tile;
     }
     
     // Get the tile below the player.

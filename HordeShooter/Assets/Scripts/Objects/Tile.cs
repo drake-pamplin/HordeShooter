@@ -23,7 +23,7 @@ public class Tile : MonoBehaviour
     public int GetTileIndex() { return tileIndex; }
     public void SetTileIndex(int tileIndex) { this.tileIndex = tileIndex; }
 
-    private bool isTraversable = false;
+    public bool isTraversable = false;
     public bool IsTraversable() { return isTraversable; }
     public void SetTraversable(bool isTraversable) { this.isTraversable = isTraversable; }
 
