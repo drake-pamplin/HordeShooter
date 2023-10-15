@@ -134,7 +134,6 @@ public class MapManager : MonoBehaviour
                     roomSideEnd = RoomSideEnd.Left;
                 }
             }
-            Debug.Log("Side for hallaway connection between room " + GetRoomObject().name + " and other room " + otherRoom.GetRoomObject().name + " is " + roomSide + " " + roomSideEnd);
             
             // Get the tile to connect to.
             int tileIndex = 0;
@@ -158,7 +157,6 @@ public class MapManager : MonoBehaviour
                 tileIndex -= GetWidth() / 4;
             }
 
-            Debug.Log("Tile for hallway connection in room " + GetRoomObject().name + " is " + GetTileAtIndex(tileIndex).name);
             return GetTileAtIndex(tileIndex);
         }
 
@@ -236,21 +234,25 @@ public class MapManager : MonoBehaviour
         Select,
         Triangulate,
         Connect,
+        Fill,
         Pathen,
         Done
     }
     private MapGenerationStages mapGenerationStage = MapGenerationStages.Generate;
+    private float mapGenerationTimer = 0;
     
     // Start is called before the first frame update
     void Start()
     {
-        
+        mapGenerationTimer = Time.time;
     }
 
     // Update is called once per frame
     void Update()
     {
-        GenerateRandomMap();
+        if (!mapGenerationStage.Equals(MapGenerationStages.Done)) {
+            GenerateRandomMap();
+        }
     }
 
     // Build map
@@ -666,6 +668,26 @@ public class MapManager : MonoBehaviour
                 ConnectRooms();
 
                 mapGenerationDelay = 0;
+                mapGenerationStage = MapGenerationStages.Fill;
+            }
+        }
+
+        // Fill map with tiles.
+        if (mapGenerationStage.Equals(MapGenerationStages.Fill)) {
+            if (mapGenerationDelay == 0) {
+                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+            }
+
+            if (mapGenerationDelay > 0) {
+                mapGenerationDelay -= Time.deltaTime;
+            }
+
+            if (mapGenerationDelay <= 0) {
+                // Generate halls between rooms.
+                Debug.Log("Filling map with tiles.");
+                FillInMap();
+
+                mapGenerationDelay = 0;
                 mapGenerationStage = MapGenerationStages.Pathen;
             }
         }
@@ -689,6 +711,11 @@ public class MapManager : MonoBehaviour
                 mapGenerationStage = MapGenerationStages.Done;
             }
         }
+
+        if (mapGenerationStage.Equals(MapGenerationStages.Done)) {
+            mapGenerationTimer = Time.time - mapGenerationTimer;
+            Debug.Log("Map generated in " + mapGenerationTimer + " seconds.");
+        }
     }
 
     // Generate random rooms around origin.
@@ -710,9 +737,6 @@ public class MapManager : MonoBehaviour
     
     // Generate halls between the rooms.
     private void GenerateRoomHalls() {
-        // Fill in map with empty tiles to allow pathfinding.
-        FillInMap();
-
         // Loop through map connections and connect the rooms with hallways.
         foreach (Connection connection in connections) {
             // Clean up tiles.
@@ -738,6 +762,12 @@ public class MapManager : MonoBehaviour
             while (tileQueue.Count > 0) {
                 GameObject tileObject = tileQueue.Dequeue();
                 Tile tile = tileObject.GetComponent<Tile>();
+                if (!IsTileViableForHallway(tile, startTile, endTile)) {
+                    continue;
+                }
+                if (tile.GetTileIndex() == endTile.GetTileIndex()) {
+                    break;
+                }
 
                 foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                     GameObject otherTileObject = tile.GetTileInDirection(tileDirection);
@@ -745,7 +775,11 @@ public class MapManager : MonoBehaviour
                         continue;
                     }
                     Tile otherTile = otherTileObject.GetComponent<Tile>();
+                    if (!IsTileViableForHallway(otherTile, startTile, endTile)) {
+                        continue;
+                    }
 
+                    // Check if a tile is traversable and add it if it is viable.
                     if (otherTile.IsTraversable() && tile.GetPathStep() + 1 < otherTile.GetPathStep()) {
                         otherTile.SetPathStep(tile.GetPathStep() + 1);
                         tileQueue.Enqueue(otherTileObject);
@@ -757,7 +791,6 @@ public class MapManager : MonoBehaviour
             path.Add(endTileObject);
             GameObject checkTileObject = endTileObject;
             Tile checkTile = checkTileObject.GetComponent<Tile>();
-            Debug.Log(checkTile.GetTileIndex() + ", " + startTile.GetTileIndex());
             while (checkTile.GetTileIndex() != startTile.GetTileIndex()) {
                 foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                     GameObject otherTileObject = checkTile.GetTileInDirection(tileDirection);
@@ -766,7 +799,6 @@ public class MapManager : MonoBehaviour
                     }
                     Tile otherTile = otherTileObject.GetComponent<Tile>();
 
-                    Debug.Log(otherTile.GetPathStep() + ", " + (checkTile.GetPathStep() - 1));
                     if (otherTile.GetPathStep() == checkTile.GetPathStep() - 1) {
                         path.Add(otherTileObject);
                         checkTileObject = otherTileObject;
@@ -775,7 +807,6 @@ public class MapManager : MonoBehaviour
                     }
                 }
             }
-            Debug.Log(path.Count);
             path.Reverse();
             path.RemoveAt(path.Count - 1);
             path.RemoveAt(0);
@@ -787,6 +818,7 @@ public class MapManager : MonoBehaviour
                     tileObject.transform.position,
                     Quaternion.identity
                 );
+                tileObject.GetComponent<Tile>().SetTraversable(false);
             }
         }
     }
@@ -1340,6 +1372,122 @@ public class MapManager : MonoBehaviour
         }
 
         return false;
+    }
+    
+    // Check if tile is viable for a hallway.
+    private bool IsTileViableForHallway(Tile tile, Tile startTile, Tile endTile) {
+        // Current tile can to be a destination point.
+        if (tile.GetTileIndex() == startTile.GetTileIndex() || tile.GetTileIndex() == endTile.GetTileIndex()) {
+            return true;
+        }
+
+        // Every tile within the cross pattern buffer tiles out needs to be traversable.
+        foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
+            GameObject checkTileObject = tile.GetTileInDirection(tileDirection);
+            for (int checkIndex = 0; checkIndex < GameManager.instance.GetMapHallwayBuffer(); checkIndex++) {
+                // If a map border is hit, the hallway is too close.
+                if (checkTileObject == null) {
+                    return false;
+                }
+                Tile checkTile = checkTileObject.GetComponent<Tile>();
+
+                if (checkTile.GetTileIndex() == startTile.GetTileIndex() || checkTile.GetTileIndex() == endTile.GetTileIndex()) {
+                    return true;
+                }
+
+                // If the tile is not traversable, the buffer region is not honored.
+                if (!checkTile.IsTraversable()) {
+                    return false;
+                }
+                checkTileObject = checkTile.GetTileInDirection(tileDirection);
+            }
+        }
+
+        // Check diagonals, too.
+        for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
+            GameObject checkTileObject;
+            Tile checkTile = tile;
+            for (int checkIndex = 0; checkIndex < GameManager.instance.GetMapHallwayBuffer(); checkIndex++) {
+                // Top left
+                if (directionIndex == 0) {
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Left);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Top);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    // Must be traversable.
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    if (!checkTile.IsTraversable()) {
+                        return false;
+                    }
+                }
+                // Top right
+                else if (directionIndex == 1) {
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Right);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Top);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    // Must be traversable.
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    if (!checkTile.IsTraversable()) {
+                        return false;
+                    }
+                }
+                // Bottom right
+                else if (directionIndex == 2) {
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Right);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Bottom);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    // Must be traversable.
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    if (!checkTile.IsTraversable()) {
+                        return false;
+                    }
+                }
+                // Bottom left
+                else {
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Left);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    checkTileObject = checkTile.GetTileInDirection(Tile.TileDirection.Bottom);
+                    // Do not hit a map border.
+                    if (checkTileObject == null) {
+                        return false;
+                    }
+                    // Must be traversable.
+                    checkTile = checkTileObject.GetComponent<Tile>();
+                    if (!checkTile.IsTraversable()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
     
     // Load map

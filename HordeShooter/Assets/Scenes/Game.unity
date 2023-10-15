@@ -686,8 +686,9 @@ MonoBehaviour:
   enemySphereCastHeight: 0.5
   enemySphereCastRadius: 0.3
   enemyTargetingOffset: 1
-  mapAdditionalConnectionsPercentage: -1
-  mapCreationDelay: 1
+  mapBorderBuffer: 10
+  mapCreationDelay: 2
+  mapHallwayBuffer: 3
   mapMaxDevianceFromOrigin: 10
   mapMaxNumberOfRooms: 50
   mapMinRoomHeight: 1

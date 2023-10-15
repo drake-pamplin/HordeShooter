@@ -73,6 +73,8 @@ public class GameManager : MonoBehaviour
     public int GetMapBorderBuffer() { return mapBorderBuffer; }
     public float mapCreationDelay = 1.0f;
     public float GetMapCreationDelay() { return mapCreationDelay; }
+    public int mapHallwayBuffer = 3;
+    public int GetMapHallwayBuffer() { return mapHallwayBuffer; }
     public float mapMaxDevianceFromOrigin = 10f;
     public float GetMapMaxDevianceFromOrigin() { return mapMaxDevianceFromOrigin; }
     public int mapMaxNumberOfRooms = 100;
