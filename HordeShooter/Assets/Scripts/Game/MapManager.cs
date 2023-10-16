@@ -6,13 +6,7 @@ using UnityEngine;
 
 public class MapManager : MonoBehaviour
 {
-    private enum RoomSide {
-        Bottom,
-        Left,
-        Right,
-        Top
-    }
-    private enum RoomSideEnd {
+    private enum RoomOrientations {
         Bottom,
         Left,
         Right,
@@ -24,6 +18,7 @@ public class MapManager : MonoBehaviour
             this.coordinates = coordinates;
             this.width = width;
             this.height = height;
+            hallwayConnections = new List<int>();
 
             GenerateRoomTiles();
         }
@@ -65,6 +60,8 @@ public class MapManager : MonoBehaviour
         public List<GameObject> GetAllTiles() { return tiles; }
         public int GetTileCount() { return tiles.Count; }
 
+        private List<int> hallwayConnections;
+
         private void GenerateRoomTiles() {
             // Create room object and add tiles.
             roomObject = new GameObject("Room_" + id);
@@ -95,69 +92,108 @@ public class MapManager : MonoBehaviour
         // Get the tile for hallway pathfinding based on the given other room.
         public GameObject GetTileForHallwayConnection(Room otherRoom) {
             // Get the side of the room the hallway will connect to.
-            RoomSide roomSide;
-            RoomSideEnd roomSideEnd;
+            RoomOrientations roomSide;
+            RoomOrientations roomSideEnd;
             Vector3 direction = (otherRoom.GetRoomObject().transform.position - GetRoomObject().transform.position).normalized;
             if (Mathf.Abs(direction.x) > Mathf.Abs(direction.z)) {
                 // Horizontal
                 if (direction.x < 0) {
                     // Left
-                    roomSide = RoomSide.Left;
+                    roomSide = RoomOrientations.Left;
                 } else {
                     // Right
-                    roomSide = RoomSide.Right;
+                    roomSide = RoomOrientations.Right;
                 }
             } else {
                 // Vertical
                 if (direction.z > 0) {
                     // Top
-                    roomSide = RoomSide.Top;
+                    roomSide = RoomOrientations.Top;
                 } else {
                     // Bottom
-                    roomSide = RoomSide.Bottom;
+                    roomSide = RoomOrientations.Bottom;
                 }
             }
 
             // Get the end of the wall that the hall will connect.
-            if (roomSide.Equals(RoomSide.Left) || roomSide.Equals(RoomSide.Right)) {
+            if (roomSide.Equals(RoomOrientations.Left) || roomSide.Equals(RoomOrientations.Right)) {
                 // Left and right
                 if (otherRoom.GetRoomObject().transform.position.z > GetRoomObject().transform.position.z) {
-                    roomSideEnd = RoomSideEnd.Top;
+                    roomSideEnd = RoomOrientations.Top;
                 } else {
-                    roomSideEnd = RoomSideEnd.Bottom;
+                    roomSideEnd = RoomOrientations.Bottom;
                 }
             } else {
                 // Top and bottom
                 if (otherRoom.GetRoomObject().transform.position.x > GetRoomObject().transform.position.x) {
-                    roomSideEnd = RoomSideEnd.Right;
+                    roomSideEnd = RoomOrientations.Right;
                 } else {
-                    roomSideEnd = RoomSideEnd.Left;
+                    roomSideEnd = RoomOrientations.Left;
                 }
             }
             
             // Get the tile to connect to.
+            int tileIndex = GetTileForOrientation(roomSide, roomSideEnd);
+
+            // Check if tile is already being used for a connection.
+            for (int checkIndex = 0; checkIndex < 8 && hallwayConnections.Contains(tileIndex); checkIndex++) {
+                // Check other end of the current side.
+                if (checkIndex % 2 == 0) {
+                    if (roomSideEnd == RoomOrientations.Left) {
+                        roomSideEnd = RoomOrientations.Right;
+                    } else if (roomSideEnd == RoomOrientations.Right) {
+                        roomSideEnd = RoomOrientations.Left;
+                    } else if (roomSideEnd == RoomOrientations.Top) {
+                        roomSideEnd = RoomOrientations.Bottom;
+                    } else {
+                        roomSideEnd = RoomOrientations.Top;
+                    }
+                } else {
+                    // Check the next side, clockwise
+                    if (roomSide == RoomOrientations.Left) {
+                        roomSide = RoomOrientations.Top;
+                        roomSideEnd = RoomOrientations.Left;
+                    } else if (roomSide == RoomOrientations.Top) {
+                        roomSide = RoomOrientations.Right;
+                        roomSideEnd = RoomOrientations.Top;
+                    } else if (roomSide == RoomOrientations.Right) {
+                        roomSide = RoomOrientations.Bottom;
+                        roomSideEnd = RoomOrientations.Right;
+                    } else {
+                        roomSide = RoomOrientations.Left;
+                        roomSideEnd = RoomOrientations.Bottom;
+                    }
+                }
+                tileIndex = GetTileForOrientation(roomSide, roomSideEnd);
+            }
+
+            hallwayConnections.Add(tileIndex);
+            return GetTileAtIndex(tileIndex);
+        }
+
+        private int GetTileForOrientation(RoomOrientations roomSide, RoomOrientations roomSideEnd) {
             int tileIndex = 0;
-            if (roomSide.Equals(RoomSide.Top)) {
+            if (roomSide.Equals(RoomOrientations.Top)) {
                 tileIndex = GetWidth() / 2;
-            } else if (roomSide.Equals(RoomSide.Right)) {
+            } else if (roomSide.Equals(RoomOrientations.Right)) {
                 tileIndex = GetWidth() * (GetHeight() / 2) - 1;
-            } else if (roomSide.Equals(RoomSide.Bottom)) {
+            } else if (roomSide.Equals(RoomOrientations.Bottom)) {
                 tileIndex = (GetTileCount() - 1) - (GetWidth() / 2);
             } else {
                 tileIndex = GetWidth() * (GetHeight() / 2);
             }
 
-            if (roomSideEnd.Equals(RoomSideEnd.Top)) {
+            if (roomSideEnd.Equals(RoomOrientations.Top)) {
                 tileIndex -= GetWidth() * (GetHeight() / 4);
-            } else if (roomSideEnd.Equals(RoomSideEnd.Right)) {
+            } else if (roomSideEnd.Equals(RoomOrientations.Right)) {
                 tileIndex += GetWidth() / 4;
-            } else if (roomSideEnd.Equals(RoomSideEnd.Bottom)) {
+            } else if (roomSideEnd.Equals(RoomOrientations.Bottom)) {
                 tileIndex += GetWidth() * (GetHeight() / 4);
             } else {
                 tileIndex -= GetWidth() / 4;
             }
 
-            return GetTileAtIndex(tileIndex);
+            return tileIndex;
         }
 
         public bool IsOverlapping(Room otherRoom) {
@@ -244,15 +280,25 @@ public class MapManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        mapGenerationTimer = Time.time;
+        // mapGenerationTimer = Time.time;
+
+        // Coroutine process:
+        // - GenerateRandomRooms()
+        // - SeparateRooms()
+        // - SelectViableRooms()
+        // - TriangulateRooms()
+        // - ConnectRooms()
+        // - FillInMap()
+        // - GenerateRoomHalls()
+        GenerateRandomMap();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!mapGenerationStage.Equals(MapGenerationStages.Done)) {
-            GenerateRandomMap();
-        }
+        // if (!mapGenerationStage.Equals(MapGenerationStages.Done)) {
+        //     GenerateRandomMap();
+        // }
     }
 
     // Build map
@@ -276,7 +322,9 @@ public class MapManager : MonoBehaviour
     }
 
     // Connect the triangulated rooms together with flow in mind.
-    private void ConnectRooms() {
+    private IEnumerator ConnectRooms() {
+        Debug.Log("Connecting rooms.");
+        
         // Create a list of connections for the final map.
         List<Connection> mapConnections = new List<Connection>();
         
@@ -334,6 +382,8 @@ public class MapManager : MonoBehaviour
             Vector3 direction = pointTwo - pointOne;
             Debug.DrawRay(pointOne, direction, Color.red, GameManager.instance.GetMapCreationDelay());
         }
+
+        yield return StartCoroutine(FillInMap());
     }
 
     // Create object tile.
@@ -484,7 +534,7 @@ public class MapManager : MonoBehaviour
     }
 
     // Fill the map in with tiles.
-    private void FillInMap() {
+    private IEnumerator FillInMap() {
         Debug.Log("Filling in map.");
         
         // Get left most coordinate.
@@ -547,7 +597,7 @@ public class MapManager : MonoBehaviour
             GameObject topTileObject = null;
             mapTiles.TryGetValue(topTileIndex, out topTileObject);
 
-            if (leftTileObject != null) {
+            if (leftTileObject != null && newTile.GetTileIndex() % mapWidth != 0) {
                 Tile leftTile = leftTileObject.GetComponent<Tile>();
                 newTile.AddTile(Tile.TileDirection.Left, leftTileObject);
                 leftTile.AddTile(Tile.TileDirection.Right, newTileObject);
@@ -562,164 +612,185 @@ public class MapManager : MonoBehaviour
         }
 
         Debug.Log("Map filled in.");
+
+        yield return StartCoroutine(GenerateRoomHalls());
     }
     
     // Generate a random map.
     private void GenerateRandomMap() {
-        if (mapGenerationStage.Equals(MapGenerationStages.Generate)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // if (mapGenerationStage.Equals(MapGenerationStages.Generate)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Generate randomly sized rooms within radius of origin.
-                Debug.Log("Generating rooms.");
-                GenerateRandomRooms();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Generate randomly sized rooms within radius of origin.
+        //         Debug.Log("Generating rooms.");
+        //         GenerateRandomRooms();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Separate;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Separate;
+        //     }
+        // }
 
-        // Separate rooms.
-        /*
-            Separate rooms using the following logic:
-                - direction = (otherRoomPos - roomPos).normalized
-                - room.Move(-direction, tileSizeUnit)
-                - otherRoom.Move(direction, tileSizeUnit)
-            Repeat while any rooms overlap.
-        */
-        if (mapGenerationStage.Equals(MapGenerationStages.Separate)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Separate rooms.
+        // /*
+        //     Separate rooms using the following logic:
+        //         - direction = (otherRoomPos - roomPos).normalized
+        //         - room.Move(-direction, tileSizeUnit)
+        //         - otherRoom.Move(direction, tileSizeUnit)
+        //     Repeat while any rooms overlap.
+        // */
+        // if (mapGenerationStage.Equals(MapGenerationStages.Separate)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Generate randomly sized rooms within radius of origin.
-                Debug.Log("Separating rooms.");
-                SeparateRooms();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Generate randomly sized rooms within radius of origin.
+        //         Debug.Log("Separating rooms.");
+        //         SeparateRooms();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Select;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Select;
+        //     }
+        // }
 
-        // Select rooms above a certain size.
-        if (mapGenerationStage.Equals(MapGenerationStages.Select)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Select rooms above a certain size.
+        // if (mapGenerationStage.Equals(MapGenerationStages.Select)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Filter out the non-viable rooms.
-                Debug.Log("Selecting viable rooms.");
-                SelectViableRooms();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Filter out the non-viable rooms.
+        //         Debug.Log("Selecting viable rooms.");
+        //         SelectViableRooms();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Triangulate;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Triangulate;
+        //     }
+        // }
 
-        // Triangulate rooms.
-        if (mapGenerationStage.Equals(MapGenerationStages.Triangulate)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Triangulate rooms.
+        // if (mapGenerationStage.Equals(MapGenerationStages.Triangulate)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Triangulate the generated rooms.
-                Debug.Log("Triangulating rooms.");
-                TriangulateRooms();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Triangulate the generated rooms.
+        //         Debug.Log("Triangulating rooms.");
+        //         TriangulateRooms();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Connect;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Connect;
+        //     }
+        // }
 
-        // Connect rooms using minimal spanning tree.
-        if (mapGenerationStage.Equals(MapGenerationStages.Connect)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Connect rooms using minimal spanning tree.
+        // if (mapGenerationStage.Equals(MapGenerationStages.Connect)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Connect rooms in the map in a minimum spanning tree.
-                Debug.Log("Connecting rooms.");
-                ConnectRooms();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Connect rooms in the map in a minimum spanning tree.
+        //         Debug.Log("Connecting rooms.");
+        //         ConnectRooms();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Fill;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Fill;
+        //     }
+        // }
 
-        // Fill map with tiles.
-        if (mapGenerationStage.Equals(MapGenerationStages.Fill)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Fill map with tiles.
+        // if (mapGenerationStage.Equals(MapGenerationStages.Fill)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Generate halls between rooms.
-                Debug.Log("Filling map with tiles.");
-                FillInMap();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Generate halls between rooms.
+        //         Debug.Log("Filling map with tiles.");
+        //         FillInMap();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Pathen;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Pathen;
+        //     }
+        // }
 
-        // Generate paths between rooms using tree.
-        if (mapGenerationStage.Equals(MapGenerationStages.Pathen)) {
-            if (mapGenerationDelay == 0) {
-                mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
-            }
+        // // Generate paths between rooms using tree.
+        // if (mapGenerationStage.Equals(MapGenerationStages.Pathen)) {
+        //     if (mapGenerationDelay == 0) {
+        //         mapGenerationDelay = GameManager.instance.GetMapCreationDelay();
+        //     }
 
-            if (mapGenerationDelay > 0) {
-                mapGenerationDelay -= Time.deltaTime;
-            }
+        //     if (mapGenerationDelay > 0) {
+        //         mapGenerationDelay -= Time.deltaTime;
+        //     }
 
-            if (mapGenerationDelay <= 0) {
-                // Generate halls between rooms.
-                Debug.Log("Generating halls for rooms.");
-                GenerateRoomHalls();
+        //     if (mapGenerationDelay <= 0) {
+        //         // Generate halls between rooms.
+        //         Debug.Log("Generating halls for rooms.");
+        //         GenerateRoomHalls();
 
-                mapGenerationDelay = 0;
-                mapGenerationStage = MapGenerationStages.Done;
-            }
-        }
+        //         mapGenerationDelay = 0;
+        //         mapGenerationStage = MapGenerationStages.Done;
+        //     }
+        // }
 
-        if (mapGenerationStage.Equals(MapGenerationStages.Done)) {
-            mapGenerationTimer = Time.time - mapGenerationTimer;
-            Debug.Log("Map generated in " + mapGenerationTimer + " seconds.");
-        }
+        // if (mapGenerationStage.Equals(MapGenerationStages.Done)) {
+        //     mapGenerationTimer = Time.time - mapGenerationTimer;
+        //     Debug.Log("Map generated in " + mapGenerationTimer + " seconds.");
+        // }
+
+        // Debug.Log("Generating rooms.");
+        // await Task.Run(() => GenerateRandomRooms());
+        // Debug.Log("Separating rooms.");
+        // await Task.Run(() => SeparateRooms());
+        // Debug.Log("Selecting viable rooms.");
+        // await Task.Run(() => SelectViableRooms());
+        // Debug.Log("Triangulating rooms.");
+        // await Task.Run(() => TriangulateRooms());
+        // Debug.Log("Connecting rooms.");
+        // await Task.Run(() => ConnectRooms());
+        // Debug.Log("Filling map with tiles.");
+        // await Task.Run(() => FillInMap());
+        // Debug.Log("Generating halls for rooms.");
+        // await Task.Run(() => GenerateRoomHalls());
+        // Debug.Log("Map generation complete.");
+
+        StartCoroutine(GenerateRandomRooms());
     }
 
     // Generate random rooms around origin.
-    private void GenerateRandomRooms() {
+    private IEnumerator GenerateRandomRooms() {
+        Debug.Log("Generating rooms.");
         rooms = new List<Room>();
         
         // Generate a random number of rooms within range of origin.
@@ -733,10 +804,14 @@ public class MapManager : MonoBehaviour
             Room room = new Room(roomIndex, coordinates, width, height);
             rooms.Add(room);
         }
+
+        yield return StartCoroutine(SeparateRooms());
     }
     
     // Generate halls between the rooms.
-    private void GenerateRoomHalls() {
+    private IEnumerator GenerateRoomHalls() {
+        Debug.Log("Generating halls for rooms.");
+        
         // Loop through map connections and connect the rooms with hallways.
         foreach (Connection connection in connections) {
             // Clean up tiles.
@@ -759,8 +834,12 @@ public class MapManager : MonoBehaviour
             // - Determine a path between the two tiles.
             Queue<GameObject> tileQueue = new Queue<GameObject>();
             tileQueue.Enqueue(startTileObject);
-            while (tileQueue.Count > 0) {
-                GameObject tileObject = tileQueue.Dequeue();
+            GameObject tileObject = null;
+            int deadDropCounter = 0;
+            while (tileQueue.Count > 0 && deadDropCounter < 100000) {
+                deadDropCounter++;
+                
+                tileObject = tileQueue.Dequeue();
                 Tile tile = tileObject.GetComponent<Tile>();
                 if (!IsTileViableForHallway(tile, startTile, endTile)) {
                     continue;
@@ -786,12 +865,18 @@ public class MapManager : MonoBehaviour
                     }
                 }
             }
+            if (deadDropCounter == 100000) {
+                Debug.Log("Dead drop at hallway routing for room " + tileObject.name);
+            }
 
             List<GameObject> path = new List<GameObject>();
             path.Add(endTileObject);
             GameObject checkTileObject = endTileObject;
             Tile checkTile = checkTileObject.GetComponent<Tile>();
-            while (checkTile.GetTileIndex() != startTile.GetTileIndex()) {
+            deadDropCounter = 0;
+            while (checkTile.GetTileIndex() != startTile.GetTileIndex() && deadDropCounter < 100000) {
+                deadDropCounter++;
+                
                 foreach (Tile.TileDirection tileDirection in Enum.GetValues(typeof(Tile.TileDirection))) {
                     GameObject otherTileObject = checkTile.GetTileInDirection(tileDirection);
                     if (otherTileObject == null) {
@@ -807,20 +892,25 @@ public class MapManager : MonoBehaviour
                     }
                 }
             }
+            if (deadDropCounter == 100000) {
+                Debug.Log("Dead drop at routing between " + startTile.GetTileIndex() + " and " + endTile.GetTileIndex());
+            }
             path.Reverse();
             path.RemoveAt(path.Count - 1);
             path.RemoveAt(0);
 
             // - Build the path out.
-            foreach (GameObject tileObject in path) {
+            foreach (GameObject pathTile in path) {
                 GameObject newTileObject = Instantiate(
                     PrefabManager.instance.GetPrefab(Constants.spriteFloorBase_0),
-                    tileObject.transform.position,
+                    pathTile.transform.position,
                     Quaternion.identity
                 );
-                tileObject.GetComponent<Tile>().SetTraversable(false);
+                pathTile.GetComponent<Tile>().SetTraversable(false);
             }
         }
+
+        yield return null;
     }
     
     // Get a list of all connections for a specific room.
@@ -1533,7 +1623,9 @@ public class MapManager : MonoBehaviour
     }
     
     // Select viable rooms.
-    private void SelectViableRooms() {
+    private IEnumerator SelectViableRooms() {
+        Debug.Log("Selecting viable rooms.");
+        
         List<Room> nonViableRooms = new List<Room>();
 
         // Add rooms below the width and height threshold.
@@ -1549,10 +1641,14 @@ public class MapManager : MonoBehaviour
             room.GetRoomObject().GetComponent<BoxCollider>().enabled = false;
             Destroy(room.GetRoomObject());
         }
+
+        yield return TriangulateRooms();
     }
 
     // Separate rooms.
-    private void SeparateRooms() {
+    private IEnumerator SeparateRooms() {
+        Debug.Log("Separating rooms.");
+        
         // Loop while any overlap exists
         int deadDropCounter = 0;
         while (DoesOverlapExist() && deadDropCounter < 10000) {
@@ -1586,6 +1682,8 @@ public class MapManager : MonoBehaviour
         if (deadDropCounter == 10000) {
             Debug.LogError("Timed out at room separation.");
         }
+
+        yield return StartCoroutine(SelectViableRooms());
     }
 
     // Set the neighbors of a tile.
@@ -1664,23 +1762,18 @@ public class MapManager : MonoBehaviour
     }
 
     // Triangulate created rooms.
-    private void TriangulateRooms() {
-        connections = new List<Connection>();
+    private IEnumerator TriangulateRooms() {
+        Debug.Log("Triangulating rooms.");
         
-        // Add the first room to the queue.
-        Queue<Room> checkRooms = new Queue<Room>();
-        checkRooms.Enqueue(rooms[0]);
+        connections = new List<Connection>();
 
         // While there are rooms in the queue.
-        while (checkRooms.Count != 0) {
-            Room room = checkRooms.Dequeue();
-
+        foreach (Room room in rooms) {
             // Check all other rooms.
             foreach (Room otherRoom in rooms) {
                 if (room.GetId() == otherRoom.GetId()) {
                     continue;
                 }
-                // Debug.Log("Checking connection viability for " + room.GetId() + " and " + otherRoom.GetId());
                 
                 // Connect two rooms that meet the following criteria:
                 // - Have clear line of sight.
@@ -1688,33 +1781,26 @@ public class MapManager : MonoBehaviour
                 RaycastHit hit;
                 if (Physics.Linecast(room.GetRoomObject().transform.position, otherRoom.GetRoomObject().transform.position, out hit)) {
                     if (!hit.collider.gameObject.name.Equals(otherRoom.GetRoomObject().name)) {
-                        // Debug.Log("Collision detected for " + room.GetId() + " and " + otherRoom.GetId() + " at " + hit.collider.gameObject.name);
                         continue;
                     }
-                } else {
-                    // Debug.Log("Continuing creation for connection between " + room.GetId() + " and " + otherRoom.GetId());
                 }
-                if (DoesConnectionExist(room, otherRoom)) {
-                    // Debug.Log("Connection exists for " + room.GetId());
+                if (DoesConnectionExist(room, otherRoom)) {// Debug.Log("Connection exists for " + room.GetId());
                     continue;
                 }
 
                 // Create new connection.
-                // Debug.Log("Creating new connection for " + room.GetId() + " and " + otherRoom.GetId());
                 Connection connection = new Connection(room, otherRoom);
                 connections.Add(connection);
-                
-                // Add any rooms that were connected to the queue.
-                checkRooms.Enqueue(otherRoom);
             }
         }
 
-        // Debug.Log("Connections: " + connections.Count);
         foreach (Connection connection in connections) {
             Vector3 pointOne = connection.GetPointOne().GetRoomObject().transform.position;
             Vector3 pointTwo = connection.GetPointTwo().GetRoomObject().transform.position;
             Vector3 direction = pointTwo - pointOne;
             Debug.DrawRay(pointOne, direction, Color.red, GameManager.instance.GetMapCreationDelay());
         }
+
+        yield return StartCoroutine(ConnectRooms());
     }
 }
